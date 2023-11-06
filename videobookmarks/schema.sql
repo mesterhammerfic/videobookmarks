@@ -1,0 +1,36 @@
+DROP TABLE IF EXISTS user;
+DROP TABLE IF EXISTS posts;
+
+CREATE TABLE user (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT UNIQUE NOT NULL,
+    password TEXT NOT NULL
+);
+
+CREATE TABLE tag_list (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    name TEXT NOT NULL,
+    description TEXT,
+    FOREIGN KEY (user_id) REFERENCES user (id)
+);
+
+CREATE TABLE video (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    link TEXT NOT NULL
+);
+
+CREATE TABLE tag (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    tag_list_id INTEGER NOT NULL,
+    video_id INTEGER NOT NULL,
+    youtube_timestamp INTEGER NOT NULL,
+    created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    tag TEXT NOT NULL,
+    FOREIGN KEY (tag_list_id) REFERENCES tag_list (id),
+    FOREIGN KEY (video_id) REFERENCES video (id),
+    FOREIGN KEY (user_id) REFERENCES user (id)
+);
