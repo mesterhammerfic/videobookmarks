@@ -1,9 +1,8 @@
 {% extends 'base.html' %}
 
 {% block header %}
-  <h1>{% block title %}Tagging for "{{ tag_list_name }}"{% endblock %}</h1>
-  <p id="demo"></p>
-
+  <h1>{% block title %}Tagging for {{ tag_list["name"] }}{% endblock %}</h1>
+  <p>{{ tag_list["description"] }}</p>
 {% endblock %}
 
 {% block content %}
@@ -23,8 +22,8 @@
       var player;
       function onYouTubeIframeAPIReady() {
         player = new YT.Player('player', {
-          height: '390',
-          width: '640',
+          height: '600',
+          width: '900',
           videoId: '{{ yt_video_id }}',
           playerVars: {
             'playsinline': 1
@@ -43,17 +42,75 @@
 
         // Get current time stamp
         var timestamp = player.getCurrentTime();
-        // Output the result in an element with id="demo"
-        document.getElementById("demo").innerHTML = timestamp
+        // Output the result in an element with id="timestamp"
         document.getElementById("timestamp").value = timestamp
         }, 250);
+      // create seek to function so that users can click on a timestamp
+      function jumptoTime(timepoint) {
+        event.preventDefault();
+        player.seekTo(timepoint, true);
+        player.playVideo();
+      }
+      // add event listener for timestamp tags
+      const tagList = document.getElementById('tag-list');
+        tagList.addEventListener('click', (event) => {
+          if (event.target && event.target.matches('button.timestamp')) {
+            const time = parseFloat(event.target.dataset.timestamp);
+            seekToTime(time);
+          }
+        });
+      // create request to dynamically update tag list when user updates tags
+      function fetchTags(videoId, tagListId) {
+          const url = `/video_tags/${videoId}/${tagListId}`;
+
+          fetch(url)
+            .then(response => response.json())
+            .then(data => {
+              // Process the retrieved data and add tags to the tag list
+              data.forEach(tag => {
+                addTag(tag.name, tag.time);
+              });
+            })
+            .catch(error => {
+              console.error('Error fetching tags:', error);
+      });
+      fetchTags({{ video_id }}, {{ tag_list["id"] }});
+        function addTag(tagName, time) {
+          const tagElement = document.createElement('button');
+          tagElement.classList.add('timestamp');
+          tagElement.dataset.timestamp = time;
+          tagElement.textContent = tagName;
+          tagList.appendChild(tagElement);
+        }
+    }
     </script>
-  <form method="post">
+<!-- Flask Form Submission without Page Reload. -->
+   <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+   <script>
+      $(document).ready(function() {
+         $('form').submit(function(event) {
+            event.preventDefault();
+            $.ajax({
+               type: 'POST',
+               url: '/add_tag',
+               data: $('form').serialize(),
+               success: function() {}
+            });
+         });
+      });
+   </script>
+  <form>
     <label for="tag">Tag</label>
     <input name="tag" id="tag"
       value="{{ request.form['tag'] }}" required>
     <input type="submit" value="add tag">
     <input type="hidden" id="timestamp" name="timestamp" value="hello">
+    <input type="hidden" id="tag_list_id" name="tag_list_id" value="{{ tag_list["id"] }}">
+    <input type="hidden" id="yt_video_id" name="yt_video_id" value="{{ yt_video_id }}">
   </form>
+
+<div id="tag-list">
+  <!-- Tags will be displayed here -->
+</div>
 
 {% endblock %}

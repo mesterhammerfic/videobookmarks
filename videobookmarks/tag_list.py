@@ -67,7 +67,7 @@ def get_tag_list_tags(id):
             " WHERE tl.id = ?",
             (id,),
         )
-        .fetchone()
+        .fetchall()
     )
 
     return tag_list_tags
@@ -88,10 +88,41 @@ def get_tag_list_videos(id):
             " WHERE tl.id = ?",
             (id,),
         )
-        .fetchone()
+        .fetchall()
     )
 
     return tag_list_videos
+
+
+def get_video_tags(video_id, tag_list_id):
+    """
+    :param video_id: id of video to get
+    :param tag_list_id: id of tag_list to get
+    :return: all the tags in that list
+    """
+    tags = (
+        get_db()
+        .execute(
+            "SELECT tag, youtube_timestamp"
+            " FROM tag t"
+            " JOIN video v ON v.id = t.video_id"
+            " JOIN tag_list tl ON t.tag_list_id = tl.id"
+            " WHERE tl.id = ? AND v.id = ?",
+            (tag_list_id, video_id),
+        )
+        .fetchall()
+    )
+    return tags
+
+
+@bp.route("/video_tags/<int:video_id>/<int:tag_list_id>", methods=("GET",))
+@login_required
+def video_tags(video_id, tag_list_id):
+    tags = get_video_tags(video_id, tag_list_id)
+    return render_template(
+        "tag_list/video_tags.html",
+        tags=tags,
+    )
 
 
 @bp.route("/create", methods=("GET", "POST"))
@@ -120,19 +151,50 @@ def create():
     return render_template("tag_list/create.html")
 
 
-def create_or_load_yt_video(yt_link: int):
+def create_or_load_yt_video_id(yt_link: str):
     db = get_db()
-    id = db.execute(
+    id_row = db.execute(
         "SELECT id FROM video WHERE link = ?",
         (yt_link,),
-    ).fetchone()["id"]
-    if not id:
-        id = db.execute(
+    ).fetchone()
+    if not id_row:
+        id_row = db.execute(
             "INSERT INTO video (link) VALUES (?) RETURNING ID",
             (yt_link,),
-        ).fetchone()["id"]
+        ).fetchone()
         db.commit()
-    return id
+    return id_row["id"]
+
+
+@bp.route("/add_tag", methods=("POST",))
+@login_required
+def add_tag():
+    """Add a new tag to a video"""
+
+    tag = request.form["tag"]
+    timestamp = request.form["timestamp"]
+    tag_list_id = request.form["tag_list_id"]
+    yt_video_id = request.form["yt_video_id"]
+    error = None
+
+    if not tag:
+        error = "Tag is required."
+    elif not timestamp:
+        error = "Timestamp is required."
+
+    if error is not None:
+        flash(error)
+    else:
+        db = get_db()
+        video_id = create_or_load_yt_video_id(yt_video_id)
+        db.execute(
+            "INSERT INTO tag"
+            " (tag_list_id, video_id, user_id, tag, youtube_timestamp)"
+            " VALUES (?, ?, ?, ?, ?)",
+            (tag_list_id, video_id, g.user["id"], tag, timestamp)
+        )
+        db.commit()
+    return "Tag Added"
 
 
 @bp.route("/tagging/<int:tag_list_id>/<string:yt_video_id>", methods=("GET", "POST"))
@@ -140,35 +202,12 @@ def create_or_load_yt_video(yt_link: int):
 def tagging(tag_list_id, yt_video_id):
     """Add a new tag to a video"""
     tag_list = get_tag_list(tag_list_id)
-
-    if request.method == "POST":
-        tag = request.form["tag"]
-        timestamp = request.form["timestamp"]
-        error = None
-
-        if not tag:
-            error = "Tag is required."
-        elif not timestamp:
-            error = "Timestamp is required."
-
-        if error is not None:
-            flash(error)
-        else:
-            db = get_db()
-            video_id = create_or_load_yt_video(yt_video_id)
-            print(video_id)
-            db.execute(
-                "INSERT INTO tag"
-                " (tag_list_id, video_id, user_id, tag, youtube_timestamp)"
-                " VALUES (?, ?, ?, ?, ?)",
-                (tag_list_id, video_id, g.user["id"], tag, timestamp)
-            )
-            db.commit()
-
+    video_id = create_or_load_yt_video_id(yt_video_id)
     return render_template(
         "tag_list/tagging.html",
-        tag_list_id=tag_list_id,
+        tag_list=tag_list,
         yt_video_id=yt_video_id,
+        video_id=video_id,
     )
 
 
