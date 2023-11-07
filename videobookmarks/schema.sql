@@ -18,7 +18,6 @@ CREATE TABLE tag_list (
 
 CREATE TABLE video (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    title TEXT NOT NULL,
     link TEXT NOT NULL
 );
 
@@ -27,7 +26,7 @@ CREATE TABLE tag (
     user_id INTEGER NOT NULL,
     tag_list_id INTEGER NOT NULL,
     video_id INTEGER NOT NULL,
-    youtube_timestamp INTEGER NOT NULL,
+    youtube_timestamp FLOAT NOT NULL,
     created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     tag TEXT NOT NULL,
     FOREIGN KEY (tag_list_id) REFERENCES tag_list (id),

@@ -81,7 +81,7 @@ def get_tag_list_videos(id):
     tag_list_videos = (
         get_db()
         .execute(
-            "SELECT DISTINCT title, link"
+            "SELECT DISTINCT link"
             " FROM video v"
             " JOIN tag t ON t.video_id = v.id"
             " JOIN tag_list tl ON t.tag_list_id = t.id"
@@ -120,6 +120,21 @@ def create():
     return render_template("tag_list/create.html")
 
 
+def create_or_load_yt_video(yt_link: int):
+    db = get_db()
+    id = db.execute(
+        "SELECT id FROM video WHERE link = ?",
+        (yt_link,),
+    ).fetchone()["id"]
+    if not id:
+        id = db.execute(
+            "INSERT INTO video (link) VALUES (?) RETURNING ID",
+            (yt_link,),
+        ).fetchone()["id"]
+        db.commit()
+    return id
+
+
 @bp.route("/tagging/<int:tag_list_id>/<string:yt_video_id>", methods=("GET", "POST"))
 @login_required
 def tagging(tag_list_id, yt_video_id):
@@ -128,18 +143,25 @@ def tagging(tag_list_id, yt_video_id):
 
     if request.method == "POST":
         tag = request.form["tag"]
-        body = request.form["body"]
+        timestamp = request.form["timestamp"]
         error = None
 
-        if not title:
-            error = "Title is required."
+        if not tag:
+            error = "Tag is required."
+        elif not timestamp:
+            error = "Timestamp is required."
 
         if error is not None:
             flash(error)
         else:
             db = get_db()
+            video_id = create_or_load_yt_video(yt_video_id)
+            print(video_id)
             db.execute(
-                "UPDATE post SET title = ?, body = ? WHERE id = ?", (title, body, id)
+                "INSERT INTO tag"
+                " (tag_list_id, video_id, user_id, tag, youtube_timestamp)"
+                " VALUES (?, ?, ?, ?, ?)",
+                (tag_list_id, video_id, g.user["id"], tag, timestamp)
             )
             db.commit()
 
@@ -167,11 +189,8 @@ def view_tag_list(id):
         if error is not None:
             flash(error)
         else:
-            return render_template(
-                "tag_list/tagging.html",
-                yt_video_id=yt_video_id,
-                tag_list_id=id,
-                tag_list_name=tag_list["name"],
+            return redirect(
+                f"/tagging/{tag_list['id']}/{yt_video_id}"
             )
     return render_template(
         "tag_list/view.html",
