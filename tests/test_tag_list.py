@@ -140,7 +140,6 @@ class TestMyAPI(unittest.TestCase):
                 'yt_video_id': 'test_link',
             }
         )
-        print(response)
         tag_id = response.json.get('id')
         with self.app.app_context():
             db = get_db()
@@ -153,4 +152,58 @@ class TestMyAPI(unittest.TestCase):
             self.assertEqual(tag_row["tag"], "monkey")
             self.assertEqual(tag_row["youtube_timestamp"], 1.123)
             self.assertEqual(tag_row["video_id"], 1)
+            self.assertEqual(tag_row["tag_list_id"], 1)
+
+    def test_create_tag_on_existing_video_new_video(self):
+        new_video_link = 'new_video_link'
+        with self.app.app_context():
+            db = get_db()
+            videos = db.execute(
+                "SELECT id FROM video"
+            ).fetchall()
+            original_video_number = len(videos)
+            self.assertEqual(original_video_number, 2)
+
+            new_video = db.execute(
+                "SELECT id FROM video WHERE link = ?",
+                (new_video_link,)
+            ).fetchone()
+            self.assertEqual(new_video, None)
+        self.auth.login()
+        response = self.client.post(
+            '/add_tag',
+            json={
+                'tag': 'monkey',
+                'timestamp': 1.123,
+                'tag_list_id': 1,
+                'yt_video_id': new_video_link,
+            }
+        )
+        tag_id = response.json.get('id')
+        with self.app.app_context():
+            db = get_db()
+            # test to see if a new video was added to the list
+            videos = db.execute(
+                "SELECT id FROM video"
+            ).fetchall()
+            new_video_number = len(videos)
+            self.assertLess(original_video_number, new_video_number)
+
+            new_video = db.execute(
+                "SELECT id FROM video WHERE link = ?",
+                (new_video_link,)
+            ).fetchone()["id"]
+            self.assertEqual(new_video, 3)
+
+            # test the actual tag was inserted accurately
+            tag_row = db.execute(
+                "SELECT tag, youtube_timestamp, video_id, tag_list_id"
+                " FROM tag"
+                " WHERE id=?",
+                (tag_id,)
+            ).fetchone()
+            self.assertEqual(tag_row["tag"], "monkey")
+            self.assertEqual(tag_row["youtube_timestamp"], 1.123)
+            # this video id should be 3 indicating that it added a new video link
+            self.assertEqual(tag_row["video_id"], 3)
             self.assertEqual(tag_row["tag_list_id"], 1)
