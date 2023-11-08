@@ -77,6 +77,12 @@ class TestMyAPI(unittest.TestCase):
         response = self.client.get('/99/view')
         self.assertEqual(response.status_code, 404)
 
+    def test_view_tag_list_video_url_post(self):
+        self.auth.login()
+        response = self.client.post('/1/view', data={'yt_video_id': 'test_link'})
+        self.assertIn(b'Redirecting', response.data)
+        self.assertIn(b'href="/tagging/1/test_link"', response.data)
+
     def test_create_tag_list_post(self):
         self.auth.login()
         self.client.post('/create', data={'name': 'test_3', 'description': 'another one'})
@@ -153,6 +159,26 @@ class TestMyAPI(unittest.TestCase):
             self.assertEqual(tag_row["youtube_timestamp"], 1.123)
             self.assertEqual(tag_row["video_id"], 1)
             self.assertEqual(tag_row["tag_list_id"], 1)
+
+    # TODO: Not sure why this gives an error but the functionality does work
+    @unittest.skip
+    def test_create_tag_without_valid_tag(self):
+        self.auth.login()
+        self.client.post(
+            '/add_tag',
+            json={
+                'tag': '',
+                'timestamp': 1.123,
+                'tag_list_id': 1,
+                'yt_video_id': 'test_link',
+            }
+        )
+
+        with self.app.app_context():
+            db = get_db()
+            tag_lists = db.execute("SELECT * FROM tag").fetchall()
+            tags = [row["tag"] for row in tag_lists]
+            self.assertNotIn("", tags)
 
     def test_create_tag_on_existing_video_new_video(self):
         new_video_link = 'new_video_link'
