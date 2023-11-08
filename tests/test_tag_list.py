@@ -161,7 +161,7 @@ class TestMyAPI(unittest.TestCase):
             tag_row = db.execute(
                 "SELECT tag, youtube_timestamp, video_id, tag_list_id"
                 " FROM tag"
-                " WHERE id=?",
+                " WHERE id=%s",
                 (tag_id,)
             ).fetchone()
             self.assertEqual(tag_row["tag"], "monkey")
@@ -200,7 +200,7 @@ class TestMyAPI(unittest.TestCase):
             self.assertEqual(original_video_number, 2)
 
             new_video = db.execute(
-                "SELECT id FROM video WHERE link = ?",
+                "SELECT id FROM video WHERE link = %s",
                 (new_video_link,)
             ).fetchone()
             self.assertEqual(new_video, None)
@@ -225,7 +225,7 @@ class TestMyAPI(unittest.TestCase):
             self.assertLess(original_video_number, new_video_number)
 
             new_video = db.execute(
-                "SELECT id FROM video WHERE link = ?",
+                "SELECT id FROM video WHERE link = %s",
                 (new_video_link,)
             ).fetchone()["id"]
             self.assertEqual(new_video, 3)
@@ -234,7 +234,7 @@ class TestMyAPI(unittest.TestCase):
             tag_row = db.execute(
                 "SELECT tag, youtube_timestamp, video_id, tag_list_id"
                 " FROM tag"
-                " WHERE id=?",
+                " WHERE id=%s",
                 (tag_id,)
             ).fetchone()
             self.assertEqual(tag_row["tag"], "monkey")

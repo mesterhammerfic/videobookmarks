@@ -21,7 +21,7 @@ def index():
     db = get_db()
     tag_lists = db.execute(
         "SELECT tl.id, name, description, user_id, username"
-        " FROM tag_list tl JOIN user u ON tl.user_id = u.id"
+        " FROM tag_list tl JOIN users u ON tl.user_id = u.id"
         " ORDER BY created DESC"
     ).fetchall()
     return render_template("tag_list/index.html", tag_lists=tag_lists)
@@ -36,13 +36,13 @@ def get_tag_list(id):
     :return: the tag_list
     :raise 404: if a post with the given id doesn't exist
     """
+    db = get_db()
     tag_list = (
-        get_db()
-        .execute(
+        db.execute(
             "SELECT tl.id, name, description, username"
             " FROM tag_list tl"
-            " JOIN user u ON tl.user_id = u.id"
-            " WHERE tl.id = ?",
+            " JOIN users u ON tl.user_id = u.id"
+            " WHERE tl.id = %s",
             (id,),
         )
         .fetchone()
@@ -59,12 +59,12 @@ def get_tag_list_tags(id):
     :param id: id of tag_list to get
     :return: all the tags in that list
     """
+    db = get_db()
     tag_list_tags = (
-        get_db()
-        .execute(
+        db.execute(
             "SELECT DISTINCT tag"
             " FROM tag t JOIN tag_list tl ON t.tag_list_id = t.id"
-            " WHERE tl.id = ?",
+            " WHERE tl.id = %s",
             (id,),
         )
         .fetchall()
@@ -78,14 +78,14 @@ def get_tag_list_videos(id):
     :param id: id of tag_list to get
     :return: all the videos in that list
     """
+    db = get_db()
     tag_list_videos = (
-        get_db()
-        .execute(
+        db.execute(
             "SELECT DISTINCT link"
             " FROM video v"
             " JOIN tag t ON t.video_id = v.id"
             " JOIN tag_list tl ON t.tag_list_id = t.id"
-            " WHERE tl.id = ?",
+            " WHERE tl.id = %s",
             (id,),
         )
         .fetchall()
@@ -102,14 +102,14 @@ def get_video_tags(video_id, tag_list_id):
     :param tag_list_id: id of tag_list to get
     :return: all the tags in that list
     """
+    db = get_db()
     tags = (
-        get_db()
-        .execute(
+        db.execute(
             "SELECT tag, youtube_timestamp"
             " FROM tag t"
             " JOIN video v ON v.id = t.video_id"
             " JOIN tag_list tl ON t.tag_list_id = tl.id"
-            " WHERE tl.id = ? AND v.id = ?"
+            " WHERE tl.id = %s AND v.id = %s"
             " ORDER BY youtube_timestamp ASC",
             (tag_list_id, video_id),
         )
@@ -135,7 +135,7 @@ def create():
         else:
             db = get_db()
             db.execute(
-                "INSERT INTO tag_list (name, description, user_id) VALUES (?, ?, ?)",
+                "INSERT INTO tag_list (name, description, user_id) VALUES (%s, %s, %s)",
                 (name, description, g.user["id"]),
             )
             db.commit()
@@ -147,12 +147,12 @@ def create():
 def create_or_load_yt_video_id(yt_link: str):
     db = get_db()
     id_row = db.execute(
-        "SELECT id FROM video WHERE link = ?",
+        "SELECT id FROM video WHERE link = %s",
         (yt_link,),
     ).fetchone()
     if not id_row:
         id_row = db.execute(
-            "INSERT INTO video (link) VALUES (?) RETURNING ID",
+            "INSERT INTO video (link) VALUES (%s) RETURNING ID",
             (yt_link,),
         ).fetchone()
         db.commit()
@@ -182,7 +182,7 @@ def add_tag():
         tag_id_row = db.execute(
             "INSERT INTO tag"
             " (tag_list_id, video_id, user_id, tag, youtube_timestamp)"
-            " VALUES (?, ?, ?, ?, ?)"
+            " VALUES (%s, %s, %s, %s, %s)"
             " RETURNING id",
             (tag_list_id, video_id, g.user["id"], tag, timestamp)
         ).fetchone()

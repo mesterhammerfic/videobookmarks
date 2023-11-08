@@ -40,7 +40,7 @@ class TestMyAPI(unittest.TestCase):
 
         with self.app.app_context():
             user = get_db().execute(
-                "SELECT * FROM user WHERE username = 'a'",
+                "SELECT * FROM users WHERE username = 'a'",
             ).fetchone() is not None
             self.assertIsNotNone(user)
 
