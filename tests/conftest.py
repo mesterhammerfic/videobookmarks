@@ -1,7 +1,7 @@
 import os
 import tempfile
 
-import pytest
+import unittest
 
 from videobookmarks import create_app
 from videobookmarks.db import get_db

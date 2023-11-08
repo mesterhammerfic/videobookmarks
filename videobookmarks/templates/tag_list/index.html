@@ -13,6 +13,7 @@
       <header>
         <div>
           <h1>{{ tag_list['name'] }}</h1>
+          <p class="body">{{ tag_list['description'] }}</p>
           <div class="about">by {{ tag_list['username'] }}</div>
         </div>
         <a class="action" href="{{ url_for('tag_list.view_tag_list', id=tag_list['id']) }}">View</a>

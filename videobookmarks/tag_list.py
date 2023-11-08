@@ -49,7 +49,7 @@ def get_tag_list(id):
     )
 
     if tag_list is None:
-        abort(404, f"Post id {id} doesn't exist.")
+        abort(404, f"Tag list id {id} doesn't exist.")
 
     return tag_list
 

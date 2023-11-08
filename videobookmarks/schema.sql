@@ -26,9 +26,9 @@ CREATE TABLE tag (
     user_id INTEGER NOT NULL,
     tag_list_id INTEGER NOT NULL,
     video_id INTEGER NOT NULL,
+    tag TEXT NOT NULL,
     youtube_timestamp FLOAT NOT NULL,
     created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    tag TEXT NOT NULL,
     FOREIGN KEY (tag_list_id) REFERENCES tag_list (id),
     FOREIGN KEY (video_id) REFERENCES video (id),
     FOREIGN KEY (user_id) REFERENCES user (id)
