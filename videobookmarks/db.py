@@ -6,12 +6,6 @@ import click
 from flask import current_app
 from flask import g
 
-DB_URL = os.getenv('DB_URL')
-if DB_URL is None:
-    raise ValueError(
-        "Missing DB_URL environment variable, could not connect to Database"
-    )
-
 
 def get_db():
     """Connect to the application's configured database. The connection
@@ -19,7 +13,10 @@ def get_db():
     again.
     """
     if "db" not in g:
-        g.db = psycopg.connect(DB_URL, row_factory=dict_row)
+        g.db = psycopg.connect(
+            current_app.config["DATABASE"],
+            row_factory=dict_row
+        )
     return g.db
 
 

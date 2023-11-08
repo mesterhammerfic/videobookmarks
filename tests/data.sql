@@ -5,8 +5,8 @@ VALUES
 
 INSERT INTO tag_list (user_id, name, description, created)
 VALUES
-  (1, 'test_1', "test_description", '2018-01-01 00:00:00'),
-  (2, 'test_2', "", '2018-01-01 00:00:00');
+  (1, 'test_1', 'test_description', '2018-01-01 00:00:00'),
+  (2, 'test_2', '', '2018-01-01 00:00:00');
 
 INSERT INTO video (link)
 VALUES

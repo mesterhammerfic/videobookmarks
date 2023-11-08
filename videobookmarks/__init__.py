@@ -2,6 +2,12 @@ import os
 
 from flask import Flask
 
+DB_URL = os.getenv('DB_URL')
+if DB_URL is None:
+    raise ValueError(
+        "Missing DB_URL environment variable, could not connect to Database"
+    )
+
 
 def create_app(test_config=None):
     """Create and configure an instance of the Flask application."""
@@ -10,7 +16,7 @@ def create_app(test_config=None):
         # a default secret that should be overridden by instance config
         SECRET_KEY="dev",
         # store the database in the instance folder
-        DATABASE=os.path.join(app.instance_path, "videobookmarks.sqlite"),
+        DATABASE=DB_URL,
     )
 
     if test_config is None:
@@ -28,7 +34,6 @@ def create_app(test_config=None):
 
     # register the database commands
     from videobookmarks import db
-
     db.init_app(app)
 
     # apply the blueprints to the app
