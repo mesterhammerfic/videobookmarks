@@ -1,4 +1,4 @@
-from flask import Blueprint
+from flask import Blueprint, Response
 from flask import flash
 from flask import g
 from flask import redirect
@@ -94,6 +94,8 @@ def get_tag_list_videos(id):
     return tag_list_videos
 
 
+@bp.route("/video_tags/<int:video_id>/<int:tag_list_id>", methods=("GET",))
+@login_required
 def get_video_tags(video_id, tag_list_id):
     """
     :param video_id: id of video to get
@@ -107,22 +109,13 @@ def get_video_tags(video_id, tag_list_id):
             " FROM tag t"
             " JOIN video v ON v.id = t.video_id"
             " JOIN tag_list tl ON t.tag_list_id = tl.id"
-            " WHERE tl.id = ? AND v.id = ?",
+            " WHERE tl.id = ? AND v.id = ?"
+            " ORDER BY youtube_timestamp ASC",
             (tag_list_id, video_id),
         )
         .fetchall()
     )
-    return tags
-
-
-@bp.route("/video_tags/<int:video_id>/<int:tag_list_id>", methods=("GET",))
-@login_required
-def video_tags(video_id, tag_list_id):
-    tags = get_video_tags(video_id, tag_list_id)
-    return render_template(
-        "tag_list/video_tags.html",
-        tags=tags,
-    )
+    return [{"tag": row["tag"], "timestamp": row["youtube_timestamp"]} for row in tags]
 
 
 @bp.route("/create", methods=("GET", "POST"))
@@ -171,30 +164,31 @@ def create_or_load_yt_video_id(yt_link: str):
 def add_tag():
     """Add a new tag to a video"""
 
-    tag = request.form["tag"]
-    timestamp = request.form["timestamp"]
-    tag_list_id = request.form["tag_list_id"]
-    yt_video_id = request.form["yt_video_id"]
+    tag = request.json["tag"]
+    timestamp = request.json["timestamp"]
+    tag_list_id = request.json["tag_list_id"]
+    yt_video_id = request.json["yt_video_id"]
     error = None
 
     if not tag:
         error = "Tag is required."
-    elif not timestamp:
-        error = "Timestamp is required."
 
     if error is not None:
         flash(error)
+        return Response(422)
     else:
         db = get_db()
         video_id = create_or_load_yt_video_id(yt_video_id)
-        db.execute(
+        tag_id_row = db.execute(
             "INSERT INTO tag"
             " (tag_list_id, video_id, user_id, tag, youtube_timestamp)"
-            " VALUES (?, ?, ?, ?, ?)",
+            " VALUES (?, ?, ?, ?, ?)"
+            " RETURNING id",
             (tag_list_id, video_id, g.user["id"], tag, timestamp)
-        )
+        ).fetchone()
         db.commit()
-    return "Tag Added"
+        # TODO: why does this need to be a blank json? js keeps throwing an error otherwise
+        return {"id": tag_id_row["id"]}
 
 
 @bp.route("/tagging/<int:tag_list_id>/<string:yt_video_id>", methods=("GET", "POST"))
