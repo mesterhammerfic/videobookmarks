@@ -231,18 +231,3 @@ def view_tag_list(id):
         videos=videos,
         tag_list=tag_list,
     )
-
-
-@bp.route("/<int:id>/delete", methods=("POST",))
-@login_required
-def delete(id):
-    """Delete a post.
-
-    Ensures that the post exists and that the logged in user is the
-    author of the post.
-    """
-    get_tag_list(id)
-    db = get_db()
-    db.execute("DELETE FROM post WHERE id = ?", (id,))
-    db.commit()
-    return redirect(url_for("tag_list.index"))

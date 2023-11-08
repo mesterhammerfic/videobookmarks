@@ -83,6 +83,15 @@ class TestMyAPI(unittest.TestCase):
         self.assertIn(b'Redirecting', response.data)
         self.assertIn(b'href="/tagging/1/test_link"', response.data)
 
+    def test_view_tag_list_video_url_post_no_video_url(self):
+        self.auth.login()
+        response = self.client.post('/1/view', data={'yt_video_id': ''})
+        self.assertIn(
+            b' <div class="flash">Youtube Video ID is required.',
+            response.data
+        )
+        self.assertIn(b'Viewing test_1 ', response.data)
+
     def test_create_tag_list_post(self):
         self.auth.login()
         self.client.post('/create', data={'name': 'test_3', 'description': 'another one'})
