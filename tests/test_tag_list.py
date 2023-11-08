@@ -128,3 +128,29 @@ class TestMyAPI(unittest.TestCase):
         # check that ordering is ascending
         sorted_list = sorted(response.json, key=lambda x: x["timestamp"])
         self.assertEqual(sorted_list, response.json)
+
+    def test_create_tag_on_existing_video(self):
+        self.auth.login()
+        response = self.client.post(
+            '/add_tag',
+            json={
+                'tag': 'monkey',
+                'timestamp': 1.123,
+                'tag_list_id': 1,
+                'yt_video_id': 'test_link',
+            }
+        )
+        print(response)
+        tag_id = response.json.get('id')
+        with self.app.app_context():
+            db = get_db()
+            tag_row = db.execute(
+                "SELECT tag, youtube_timestamp, video_id, tag_list_id"
+                " FROM tag"
+                " WHERE id=?",
+                (tag_id,)
+            ).fetchone()
+            self.assertEqual(tag_row["tag"], "monkey")
+            self.assertEqual(tag_row["youtube_timestamp"], 1.123)
+            self.assertEqual(tag_row["video_id"], 1)
+            self.assertEqual(tag_row["tag_list_id"], 1)
