@@ -1,3 +1,5 @@
+import os
+
 from flask import Blueprint, Response
 from flask import flash
 from flask import g
@@ -10,7 +12,46 @@ from werkzeug.exceptions import abort
 from videobookmarks.auth import login_required
 from videobookmarks.db import get_db
 
+import requests
+
 bp = Blueprint("tag_list", __name__)
+
+YT_API_KEY = os.getenv("YT_API_KEY")
+if not YT_API_KEY:
+    raise ValueError("YT_API_KEY not set")
+
+def get_video_details(video_id):
+    base_url = "https://www.googleapis.com/youtube/v3/videos"
+    params = {
+        "part": "snippet",
+        "id": video_id,
+        "key": YT_API_KEY,
+    }
+
+    try:
+        response = requests.get(base_url, params=params)
+        data = response.json()
+
+        if "items" in data and len(data["items"]) > 0:
+            video = data["items"][0]
+            snippet = video["snippet"]
+            title = snippet.get("title", "")
+            thumbnails = snippet.get("thumbnails", {})
+            thumbnail_url = thumbnails.get("default", {}).get("url", "")
+
+            return {
+                "title": title,
+                "thumbnail_url": thumbnail_url
+            }
+
+    except Exception as e:
+        print("Error fetching video details:", str(e))
+
+    return {
+        "title": "",
+        "thumbnail_url": ""
+    }
+
 
 @bp.route("/")
 @login_required
@@ -110,20 +151,23 @@ def get_tag_list_videos(tag_list_id):
     db = get_db()
     if tags:
         statement = (
-            "SELECT link, COUNT(*) as num_tags, ARRAY_AGG(DISTINCT tag) as tags, ARRAY_AGG(DISTINCT tag) && %s AS show"
+            "SELECT link, thumbnail_url, title,"
+            " COUNT(*) as num_tags,"
+            " ARRAY_AGG(DISTINCT tag) as tags,"
+            " ARRAY_AGG(DISTINCT tag) && %s AS show"
             " FROM video v"
             " JOIN tag t ON t.video_id = v.id"
             " WHERE t.tag_list_id = %s"
-            " GROUP BY link"
+            " GROUP BY link, thumbnail_url, title"
             " ORDER BY ARRAY_AGG(DISTINCT tag) && %s DESC, count(*) DESC"
         )
     else:
         statement = (
-            "SELECT link, COUNT(*) as num_tags, ARRAY_AGG(DISTINCT tag) as tags, true AS show"
+            "SELECT link, thumbnail_url, title, COUNT(*) as num_tags, ARRAY_AGG(DISTINCT tag) as tags, true AS show"
             " FROM video v"
             " JOIN tag t ON t.video_id = v.id"
             " WHERE t.tag_list_id = %s"
-            " GROUP BY link"
+            " GROUP BY link, thumbnail_url, title"
             " ORDER BY count(*) DESC"
         )
 
@@ -200,9 +244,10 @@ def create_or_load_yt_video_id(yt_link: str):
         (yt_link,),
     ).fetchone()
     if not id_row:
+        video_details = get_video_details(yt_link)
         id_row = db.execute(
-            "INSERT INTO video (link) VALUES (%s) RETURNING ID",
-            (yt_link,),
+            "INSERT INTO video (link, thumbnail, title) VALUES (%s, %s, %s) RETURNING ID",
+            (yt_link, video_details["thumbnail_url"], video_details["title"]),
         ).fetchone()
         db.commit()
     return id_row["id"]

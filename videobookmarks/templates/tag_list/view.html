@@ -49,14 +49,6 @@
             return data;
         }
 
-        // Function to fetch video details from YouTube Data API
-        async function fetchVideoDetails(videoId) {
-            const apiKey = 'YOUR_YOUTUBE_API_KEY'; // Replace with your YouTube Data API key
-            const response = await fetch(`https://www.googleapis.com/youtube/v3/videos?id=${videoId}&part=snippet&key=${apiKey}`);
-            const data = await response.json();
-            return data;
-        }
-
         // Function to update the lists based on selected filters
         async function updateLists() {
             // Replace 'tag_list_id' with the actual integer you want to use
@@ -107,7 +99,7 @@
             const list2Content = document.getElementById("list2-content");
             list2Content.innerHTML = ""; // Clear existing content
 
-            for (const video of videosData) {
+            videosData.forEach(video => {
                 const listItem = document.createElement("li");
                 const checkbox = document.createElement("input");
                 checkbox.type = "checkbox";
@@ -134,30 +126,22 @@
                     updateLists(); // Update the lists based on selections
                 });
 
-                // Fetch video details from YouTube API
-                const videoDetails = await fetchVideoDetails(video.link);
-
                 // Display video thumbnail and title
-                if (videoDetails.items.length > 0) {
-                    const thumbnailUrl = videoDetails.items[0].snippet.thumbnails.medium.url;
-                    const title = videoDetails.items[0].snippet.title;
+                const videoItem = document.createElement("div");
+                videoItem.classList.add("video-item");
+                const thumbnail = document.createElement("img");
+                thumbnail.src = `https://img.youtube.com/vi/${video.link}/mqdefault.jpg`;
+                thumbnail.classList.add("video-thumbnail");
+                const titleElement = document.createElement("span");
+                titleElement.textContent = `Video Title: ${video.title}, Num Tags: ${video.num_tags}`;
 
-                    const videoItem = document.createElement("div");
-                    videoItem.classList.add("video-item");
-                    const thumbnail = document.createElement("img");
-                    thumbnail.src = thumbnailUrl;
-                    thumbnail.classList.add("video-thumbnail");
-                    const titleElement = document.createElement("span");
-                    titleElement.textContent = title;
+                videoItem.appendChild(thumbnail);
+                videoItem.appendChild(titleElement);
 
-                    videoItem.appendChild(thumbnail);
-                    videoItem.appendChild(titleElement);
-
-                    listItem.appendChild(checkbox);
-                    listItem.appendChild(videoItem);
-                    list2Content.appendChild(listItem);
-                }
-            }
+                listItem.appendChild(checkbox);
+                listItem.appendChild(videoItem);
+                list2Content.appendChild(listItem);
+            });
         }
 
         // Initial load with no filters
