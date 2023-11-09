@@ -72,3 +72,46 @@ h2 {
     margin: 0;
     color: #3498db;
 }
+.tag-button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    margin: 4px;
+    cursor: pointer;
+}
+
+.tag-button.selected {
+    background-color: #45a049;
+    border-color: #45a049; /* Change border color when selected */
+}
+
+.lists-container {
+    display: flex;
+    justify-content: space-between;
+}
+
+.list {
+    flex: 1;
+    padding: 16px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    margin: 8px;
+}
+
+ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+li {
+    margin: 4px 0;
+}
+
+.video-checkbox {
+    margin-right: 8px;
+}
+
+.video-checkbox:checked + label {
+    color: gray;
+}

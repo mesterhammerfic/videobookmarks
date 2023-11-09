@@ -55,22 +55,43 @@ def get_tag_list(id):
 
 
 @login_required
-@bp.route("/get_tags/<int:tag_list_id>")
+@bp.route("/get_tags/<int:tag_list_id>", methods=("POST",))
 def get_tag_list_tags(tag_list_id):
     """
     :param tag_list_id: id of tag_list to get
     :return: all the tags in that list
     """
+    videos = request.json["videoLinks"]
     db = get_db()
-    tag_list_tags = (
-        db.execute(
-            "SELECT tag, COUNT(*) as count, ARRAY_AGG(DISTINCT v.link) as links"
+    if videos:
+        statement = (
+            "SELECT tag, COUNT(*) as count, ARRAY_AGG(DISTINCT v.link) as links,"
+            " ARRAY_AGG(DISTINCT v.link) && %s AS show"
             " FROM tag t"
             " JOIN video v on t.video_id = v.id"
             " WHERE tag_list_id = %s"
             " GROUP BY tag"
-            " ORDER BY count(*) DESC",
-            (tag_list_id,),
+            " ORDER BY ARRAY_AGG(DISTINCT v.link) && %s DESC, count(*) DESC"
+        )
+    else:
+        statement = (
+            "SELECT tag, COUNT(*) as count, ARRAY_AGG(DISTINCT v.link) as links, true AS show"
+            " FROM tag t"
+            " JOIN video v on t.video_id = v.id"
+            " WHERE tag_list_id = %s"
+            " GROUP BY tag"
+            " ORDER BY count(*) DESC"
+        )
+
+    if videos:
+        arguments = (videos, tag_list_id, videos)
+    else:
+        arguments = (tag_list_id,)
+
+    tag_list_tags = (
+        db.execute(
+            statement,
+            arguments,
         )
         .fetchall()
     )
@@ -79,22 +100,42 @@ def get_tag_list_tags(tag_list_id):
 
 
 @login_required
-@bp.route("/get_videos/<int:tag_list_id>")
+@bp.route("/get_videos/<int:tag_list_id>", methods=("POST",))
 def get_tag_list_videos(tag_list_id):
     """
     :param tag_list_id: id of tag_list to get
     :return: all the videos in that list
     """
+    tags = request.json["tags"]
     db = get_db()
-    tag_list_videos = (
-        db.execute(
-            "SELECT link, COUNT(*) as num_tags, ARRAY_AGG(DISTINCT tag) as tags"
+    if tags:
+        statement = (
+            "SELECT link, COUNT(*) as num_tags, ARRAY_AGG(DISTINCT tag) as tags, ARRAY_AGG(DISTINCT tag) && %s AS show"
             " FROM video v"
             " JOIN tag t ON t.video_id = v.id"
             " WHERE t.tag_list_id = %s"
             " GROUP BY link"
-            " ORDER BY count(*) DESC",
-            (tag_list_id,),
+            " ORDER BY ARRAY_AGG(DISTINCT tag) && %s DESC, count(*) DESC"
+        )
+    else:
+        statement = (
+            "SELECT link, COUNT(*) as num_tags, ARRAY_AGG(DISTINCT tag) as tags, true AS show"
+            " FROM video v"
+            " JOIN tag t ON t.video_id = v.id"
+            " WHERE t.tag_list_id = %s"
+            " GROUP BY link"
+            " ORDER BY count(*) DESC"
+        )
+
+    if tags:
+        arguments = (tags, tag_list_id, tags)
+    else:
+        arguments = (tag_list_id,)
+
+    tag_list_videos = (
+        db.execute(
+            statement,
+            arguments,
         )
         .fetchall()
     )

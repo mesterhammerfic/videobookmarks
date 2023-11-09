@@ -15,7 +15,7 @@
 
       <h2>Wanna browse? Or view existing tags:</h2>
 
-    <div class="lists-container">
+     <div class="lists-container">
         <div class="list" id="list1">
             <h2>List 1 (Tags)</h2>
             <ul id="list1-content">
@@ -32,97 +32,79 @@
     </div>
 
     <script>
-        // Function to fetch data from an endpoint
-        async function fetchData(endpoint) {
-            const response = await fetch(endpoint);
+        // Function to fetch data from an endpoint with JSON body
+        async function fetchData(endpoint, body) {
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(body)
+            });
             const data = await response.json();
             return data;
         }
 
-        // Function to filter and update the list of videos based on selected tags
-        function filterVideos(selectedTags) {
-            const list2Content = document.getElementById("list2-content");
-            const list2Items = list2Content.querySelectorAll("li");
+        // Function to update the lists based on selected filters
+        function updateLists(selectedTags, selectedVideos) {
+            // Replace 'tag_list_id' with the actual integer you want to use
+            const tagListId = 1;
 
-            list2Items.forEach(item => {
-                const videoTags = item.dataset.tags.split(",");
-                const hasAllTags = selectedTags.every(tag => videoTags.includes(tag));
-                if (selectedTags.length === 0 || hasAllTags) {
-                    item.style.display = "block";
-                } else {
-                    item.style.display = "none";
-                }
-            });
+            const tagParams = { videoLinks: selectedVideos };
+            const videoParams = { tags: selectedTags };
+
+            // Fetch filtered data for tags and videos
+            fetchData(`/get_tags/${tagListId}`, tagParams)
+                .then(tagsData => {
+                    const list1Content = document.getElementById("list1-content");
+                    list1Content.innerHTML = ""; // Clear existing content
+
+                    tagsData.forEach(tag => {
+                        const listItem = document.createElement("li");
+                        const tagButton = document.createElement("button");
+                        tagButton.textContent = tag.tag;
+                        tagButton.classList.add("tag-button");
+                        tagButton.disabled = !tag.show; // Disable button if show is false
+                        tagButton.addEventListener("click", () => {
+                            tagButton.classList.toggle("selected");
+                            const selectedTags = Array.from(document.querySelectorAll('.tag-button.selected')).map(button => button.textContent);
+                            const selectedVideos = Array.from(document.querySelectorAll('.video-checkbox:checked')).map(checkbox => checkbox.value);
+                            updateLists(selectedTags, selectedVideos);
+                        });
+                        list1Content.appendChild(listItem);
+                        listItem.appendChild(tagButton);
+                    });
+                });
+
+            fetchData(`/get_videos/${tagListId}`, videoParams)
+                .then(videosData => {
+                    const list2Content = document.getElementById("list2-content");
+                    list2Content.innerHTML = ""; // Clear existing content
+
+                    videosData.forEach(video => {
+                        const listItem = document.createElement("li");
+                        const checkbox = document.createElement("input");
+                        checkbox.type = "checkbox";
+                        checkbox.value = video.link;
+                        checkbox.classList.add("video-checkbox");
+                        checkbox.disabled = !video.show; // Disable checkbox if show is false
+                        checkbox.addEventListener("change", () => {
+                            const selectedTags = Array.from(document.querySelectorAll('.tag-button.selected')).map(button => button.textContent);
+                            const selectedVideos = Array.from(document.querySelectorAll('.video-checkbox:checked')).map(checkbox => checkbox.value);
+                            updateLists(selectedTags, selectedVideos);
+                        });
+                        listItem.appendChild(checkbox);
+                        const label = document.createElement("label");
+                        label.textContent = `Video Link: ${video.link}, Num Tags: ${video.num_tags}`;
+                        listItem.dataset.tags = video.tags.join(",");
+                        listItem.appendChild(label);
+                        list2Content.appendChild(listItem);
+                    });
+                });
         }
 
-        // Function to filter and update the list of tags based on selected videos
-        function filterTags(selectedVideos) {
-            const list1Content = document.getElementById("list1-content");
-            const tagButtons = list1Content.querySelectorAll(".tag-button");
-
-            tagButtons.forEach(tagButton => {
-                const tag = tagButton.textContent;
-                const tagLinks = tagButton.dataset.links.split(",");
-                const shouldDisable = !selectedVideos.every(selectedVideo => tagLinks.includes(selectedVideo));
-                if (shouldDisable) {
-                    tagButton.classList.add("disabled");
-                } else {
-                    tagButton.classList.remove("disabled");
-                }
-            });
-        }
-
-        // Replace 'tag_list_id' with the actual integer you want to use
-        const tagListId = 1;
-
-        // Fetch data from the /get_tags/{tag_list_id} and /get_videos/{tag_list_id} endpoints
-        const tagsPromise = fetchData(`/get_tags/${tagListId}`);
-        const videosPromise = fetchData(`/get_videos/${tagListId}`);
-
-        // Process the data and generate the lists when both promises are resolved
-        Promise.all([tagsPromise, videosPromise]).then(([tagsData, videosData]) => {
-            const list1Content = document.getElementById("list1-content");
-            const list2Content = document.getElementById("list2-content");
-
-            // Display data from the /get_tags/{tag_list_id} endpoint in List 1
-            tagsData.forEach(tag => {
-                const listItem = document.createElement("li");
-                list1Content.appendChild(listItem);
-
-                // Create tag buttons with the tag name and associated links as data attribute
-                const tagButton = document.createElement("button");
-                tagButton.textContent = tag.tag;
-                tagButton.classList.add("tag-button");
-                tagButton.dataset.links = tag.links.join(",");
-                tagButton.addEventListener("click", () => {
-                    tagButton.classList.toggle("selected");
-                    const selectedTags = Array.from(document.querySelectorAll('.tag-button.selected')).map(button => button.textContent);
-                    filterVideos(selectedTags);
-                });
-                list1Content.appendChild(tagButton);
-            });
-
-            // Display data from the /get_videos/{tag_list_id} endpoint in List 2
-            videosData.forEach(video => {
-                const listItem = document.createElement("li");
-                const checkbox = document.createElement("input");
-                checkbox.type = "checkbox";
-                checkbox.value = video.link;
-                checkbox.classList.add("video-checkbox");
-                checkbox.addEventListener("change", () => {
-                    const selectedVideos = Array.from(document.querySelectorAll('.video-checkbox:checked')).map(checkbox => checkbox.value);
-                    filterTags(selectedVideos);
-                });
-                listItem.appendChild(checkbox);
-                const label = document.createElement("label");
-                label.textContent = `Video Link: ${video.link}, Num Tags: ${video.num_tags}`;
-                listItem.dataset.tags = video.tags.join(",");
-                listItem.appendChild(label);
-                list2Content.appendChild(listItem);
-            });
-        }).catch(error => {
-            console.error("Error fetching data:", error);
-        });
+        // Initial load with no filters
+        updateLists([], []);
     </script>
 
 
