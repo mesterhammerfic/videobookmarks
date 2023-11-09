@@ -17,14 +17,14 @@
 
     <div class="lists-container">
         <div class="list" id="list1">
-            <h2>List 1</h2>
+            <h2>List 1 (Tags)</h2>
             <ul id="list1-content">
                 <!-- List 1 content will be dynamically generated here -->
             </ul>
         </div>
 
         <div class="list" id="list2">
-            <h2>List 2</h2>
+            <h2>List 2 (Videos)</h2>
             <ul id="list2-content">
                 <!-- List 2 content will be dynamically generated here -->
             </ul>
@@ -39,20 +39,11 @@
             return data;
         }
 
-        // Function to filter and update the video list based on selected tags
-        function toggleTag(tag) {
-            const tagButtons = document.querySelectorAll(".tag-button");
-            const selectedTags = [];
-
-            tagButtons.forEach(button => {
-                if (button.classList.contains("selected")) {
-                    selectedTags.push(button.dataset.label);
-                }
-            });
-
-            // Filter and update the video list based on selected tags
+        // Function to filter and update the list of videos based on selected tags
+        function filterVideos(selectedTags) {
             const list2Content = document.getElementById("list2-content");
             const list2Items = list2Content.querySelectorAll("li");
+
             list2Items.forEach(item => {
                 const videoTags = item.dataset.tags.split(",");
                 const hasAllTags = selectedTags.every(tag => videoTags.includes(tag));
@@ -60,6 +51,23 @@
                     item.style.display = "block";
                 } else {
                     item.style.display = "none";
+                }
+            });
+        }
+
+        // Function to filter and update the list of tags based on selected videos
+        function filterTags(selectedVideos) {
+            const list1Content = document.getElementById("list1-content");
+            const tagButtons = list1Content.querySelectorAll(".tag-button");
+
+            tagButtons.forEach(tagButton => {
+                const tag = tagButton.textContent;
+                const tagLinks = tagButton.dataset.links.split(",");
+                const shouldDisable = !selectedVideos.every(selectedVideo => tagLinks.includes(selectedVideo));
+                if (shouldDisable) {
+                    tagButton.classList.add("disabled");
+                } else {
+                    tagButton.classList.remove("disabled");
                 }
             });
         }
@@ -81,14 +89,15 @@
                 const listItem = document.createElement("li");
                 list1Content.appendChild(listItem);
 
-                // Create tag buttons with text from the original list
+                // Create tag buttons with the tag name and associated links as data attribute
                 const tagButton = document.createElement("button");
-                tagButton.textContent = `${tag.tag}: Count - ${tag.count}`; // Add the label data attribute
+                tagButton.textContent = tag.tag;
                 tagButton.classList.add("tag-button");
-                tagButton.dataset.label = tag.tag;
+                tagButton.dataset.links = tag.links.join(",");
                 tagButton.addEventListener("click", () => {
                     tagButton.classList.toggle("selected");
-                    toggleTag(tag.tag);
+                    const selectedTags = Array.from(document.querySelectorAll('.tag-button.selected')).map(button => button.textContent);
+                    filterVideos(selectedTags);
                 });
                 list1Content.appendChild(tagButton);
             });
