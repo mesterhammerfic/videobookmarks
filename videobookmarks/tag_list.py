@@ -54,18 +54,23 @@ def get_tag_list(id):
     return tag_list
 
 
-def get_tag_list_tags(id):
+@login_required
+@bp.route("/get_tags/<int:tag_list_id>")
+def get_tag_list_tags(tag_list_id):
     """
-    :param id: id of tag_list to get
+    :param tag_list_id: id of tag_list to get
     :return: all the tags in that list
     """
     db = get_db()
     tag_list_tags = (
         db.execute(
-            "SELECT DISTINCT tag"
-            " FROM tag t JOIN tag_list tl ON t.tag_list_id = t.id"
-            " WHERE tl.id = %s",
-            (id,),
+            "SELECT tag, COUNT(*) as count, ARRAY_AGG(DISTINCT v.link) as links"
+            " FROM tag t"
+            " JOIN video v on t.video_id = v.id"
+            " WHERE tag_list_id = %s"
+            " GROUP BY tag"
+            " ORDER BY count(*) DESC",
+            (tag_list_id,),
         )
         .fetchall()
     )
@@ -73,20 +78,23 @@ def get_tag_list_tags(id):
     return tag_list_tags
 
 
-def get_tag_list_videos(id):
+@login_required
+@bp.route("/get_videos/<int:tag_list_id>")
+def get_tag_list_videos(tag_list_id):
     """
-    :param id: id of tag_list to get
+    :param tag_list_id: id of tag_list to get
     :return: all the videos in that list
     """
     db = get_db()
     tag_list_videos = (
         db.execute(
-            "SELECT DISTINCT link"
+            "SELECT link, COUNT(*) as num_tags, ARRAY_AGG(DISTINCT tag) as tags"
             " FROM video v"
             " JOIN tag t ON t.video_id = v.id"
-            " JOIN tag_list tl ON t.tag_list_id = t.id"
-            " WHERE tl.id = %s",
-            (id,),
+            " WHERE t.tag_list_id = %s"
+            " GROUP BY link"
+            " ORDER BY count(*) DESC",
+            (tag_list_id,),
         )
         .fetchall()
     )
@@ -210,8 +218,6 @@ def tagging(tag_list_id, yt_video_id):
 def view_tag_list(id):
     """View a tag list."""
     tag_list = get_tag_list(id)
-    tags = get_tag_list_tags(id)
-    videos = get_tag_list_videos(id)
     if request.method == "POST":
         yt_video_id = request.form["yt_video_id"]
         error = None
@@ -227,7 +233,5 @@ def view_tag_list(id):
             )
     return render_template(
         "tag_list/view.html",
-        tags=tags,
-        videos=videos,
         tag_list=tag_list,
     )

@@ -7,8 +7,66 @@
 
 {% block content %}
   <form method="post">
+      <h2>Got a link? Tag a Video:</h2>
     <label for="yt_video_id">Youtube Video ID</label>
     <input name="yt_video_id" id="yt_video_id" value="{{ request.form['yt_video_id'] }}" required>
     <input type="submit" value="Tag Video">
   </form>
+
+      <h2>Wanna browse? Or view existing tags:</h2>
+    <div class="lists-container">
+        <div class="list" id="list1">
+            <h2>Tags</h2>
+            <ul id="list1-content">
+                <!-- List 1 content will be dynamically generated here -->
+            </ul>
+        </div>
+
+        <div class="list" id="list2">
+            <h2>Videos</h2>
+            <ul id="list2-content">
+                <!-- List 2 content will be dynamically generated here -->
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Function to fetch data from an endpoint
+        async function fetchData(endpoint) {
+            const response = await fetch(endpoint);
+            const data = await response.json();
+            return data;
+        }
+
+        // Replace 'tag_list_id' with the actual integer you want to use
+        const tagListId = 1;
+
+        // Fetch data from the /get_tags/{tag_list_id} and /get_videos/{tag_list_id} endpoints
+        const tagsPromise = fetchData(`/get_tags/${tagListId}`);
+        const videosPromise = fetchData(`/get_videos/${tagListId}`);
+
+        // Process the data and generate the lists when both promises are resolved
+        Promise.all([tagsPromise, videosPromise]).then(([tagsData, videosData]) => {
+            const list1Content = document.getElementById("list1-content");
+            const list2Content = document.getElementById("list2-content");
+
+            // Display data from the /get_tags/{tag_list_id} endpoint in List 1
+            tagsData.forEach(tag => {
+                const listItem = document.createElement("li");
+                listItem.textContent = `${tag.tag}: Count - ${tag.count}`;
+                list1Content.appendChild(listItem);
+            });
+
+            // Display data from the /get_videos/{tag_list_id} endpoint in List 2
+            videosData.forEach(video => {
+                const listItem = document.createElement("li");
+                listItem.textContent = `Video Link: ${video.link}, Num Tags: ${video.num_tags}`;
+                list2Content.appendChild(listItem);
+            });
+        }).catch(error => {
+            console.error("Error fetching data:", error);
+        });
+    </script>
+
+
 {% endblock %}
