@@ -74,16 +74,23 @@ h2 {
 }
 .tag-button {
     background-color: #4CAF50;
-    color: white;
+    color: black;
     border: none;
     padding: 8px 16px;
     margin: 4px;
     cursor: pointer;
+    border: 2px solid transparent; /* Add a transparent border initially */
 }
 
 .tag-button.selected {
     background-color: #45a049;
-    border-color: #45a049; /* Change border color when selected */
+    border-color: #4CAF50; /* Change border color when selected */
+    color: white; /* Make text color white when selected */
+}
+
+.tag-button[disabled] {
+    opacity: 0.5;
+    pointer-events: none; /* Disable pointer events */
 }
 
 .lists-container {
@@ -114,4 +121,9 @@ li {
 
 .video-checkbox:checked + label {
     color: gray;
+}
+
+.video-checkbox[disabled] + label {
+    opacity: 0.5;
+    pointer-events: none; /* Disable pointer events */
 }

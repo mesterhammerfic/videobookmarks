@@ -32,6 +32,10 @@
     </div>
 
     <script>
+        // Arrays to store selected tags and videos
+        const selectedTags = [];
+        const selectedVideos = [];
+
         // Function to fetch data from an endpoint with JSON body
         async function fetchData(endpoint, body) {
             const response = await fetch(endpoint, {
@@ -46,7 +50,7 @@
         }
 
         // Function to update the lists based on selected filters
-        function updateLists(selectedTags, selectedVideos) {
+        function updateLists() {
             // Replace 'tag_list_id' with the actual integer you want to use
             const tagListId = 1;
 
@@ -62,15 +66,30 @@
                     tagsData.forEach(tag => {
                         const listItem = document.createElement("li");
                         const tagButton = document.createElement("button");
-                        tagButton.textContent = tag.tag;
+                        tagButton.textContent = `${tag.tag} (${tag.count})`;
+                        tagButton.label = `${tag.tag} (${tag.count})`;
                         tagButton.classList.add("tag-button");
                         tagButton.disabled = !tag.show; // Disable button if show is false
+
+                        // Check if the tag is in the selectedTags array
+                        if (selectedTags.includes(tag.tag)) {
+                            tagButton.classList.add("selected");
+                        }
+
+                        // Toggle the selected state when clicked
                         tagButton.addEventListener("click", () => {
-                            tagButton.classList.toggle("selected");
-                            const selectedTags = Array.from(document.querySelectorAll('.tag-button.selected')).map(button => button.textContent);
-                            const selectedVideos = Array.from(document.querySelectorAll('.video-checkbox:checked')).map(checkbox => checkbox.value);
-                            updateLists(selectedTags, selectedVideos);
+                            if (selectedTags.includes(tag.tag)) {
+                                // Deselect the tag
+                                const index = selectedTags.indexOf(tag.tag);
+                                selectedTags.splice(index, 1);
+                            } else {
+                                // Select the tag
+                                selectedTags.push(tag.tag);
+                            }
+
+                            updateLists(); // Update the lists based on selections
                         });
+
                         list1Content.appendChild(listItem);
                         listItem.appendChild(tagButton);
                     });
@@ -88,14 +107,29 @@
                         checkbox.value = video.link;
                         checkbox.classList.add("video-checkbox");
                         checkbox.disabled = !video.show; // Disable checkbox if show is false
+
+                        // Check if the video is in the selectedVideos array
+                        if (selectedVideos.includes(video.link)) {
+                            checkbox.checked = true;
+                        }
+
+                        // Toggle the selected state when clicked
                         checkbox.addEventListener("change", () => {
-                            const selectedTags = Array.from(document.querySelectorAll('.tag-button.selected')).map(button => button.textContent);
-                            const selectedVideos = Array.from(document.querySelectorAll('.video-checkbox:checked')).map(checkbox => checkbox.value);
-                            updateLists(selectedTags, selectedVideos);
+                            if (selectedVideos.includes(video.link)) {
+                                // Deselect the video
+                                const index = selectedVideos.indexOf(video.link);
+                                selectedVideos.splice(index, 1);
+                            } else {
+                                // Select the video
+                                selectedVideos.push(video.link);
+                            }
+
+                            updateLists(); // Update the lists based on selections
                         });
+
                         listItem.appendChild(checkbox);
                         const label = document.createElement("label");
-                        label.textContent = `Video Link: ${video.link}, Num Tags: ${video.num_tags}`;
+                        label.textContent = `Video Link: ${video.link}, Tags: ${video.num_tags}`;
                         listItem.dataset.tags = video.tags.join(",");
                         listItem.appendChild(label);
                         list2Content.appendChild(listItem);
@@ -104,7 +138,7 @@
         }
 
         // Initial load with no filters
-        updateLists([], []);
+        updateLists();
     </script>
 
 
