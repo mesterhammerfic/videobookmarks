@@ -105,8 +105,19 @@
             // Display data from the /get_videos/{tag_list_id} endpoint in List 2
             videosData.forEach(video => {
                 const listItem = document.createElement("li");
-                listItem.textContent = `Video Link: ${video.link}, Num Tags: ${video.num_tags}`;
+                const checkbox = document.createElement("input");
+                checkbox.type = "checkbox";
+                checkbox.value = video.link;
+                checkbox.classList.add("video-checkbox");
+                checkbox.addEventListener("change", () => {
+                    const selectedVideos = Array.from(document.querySelectorAll('.video-checkbox:checked')).map(checkbox => checkbox.value);
+                    filterTags(selectedVideos);
+                });
+                listItem.appendChild(checkbox);
+                const label = document.createElement("label");
+                label.textContent = `Video Link: ${video.link}, Num Tags: ${video.num_tags}`;
                 listItem.dataset.tags = video.tags.join(",");
+                listItem.appendChild(label);
                 list2Content.appendChild(listItem);
             });
         }).catch(error => {
