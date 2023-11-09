@@ -49,8 +49,16 @@
             return data;
         }
 
+        // Function to fetch video details from YouTube Data API
+        async function fetchVideoDetails(videoId) {
+            const apiKey = 'YOUR_YOUTUBE_API_KEY'; // Replace with your YouTube Data API key
+            const response = await fetch(`https://www.googleapis.com/youtube/v3/videos?id=${videoId}&part=snippet&key=${apiKey}`);
+            const data = await response.json();
+            return data;
+        }
+
         // Function to update the lists based on selected filters
-        function updateLists() {
+        async function updateLists() {
             // Replace 'tag_list_id' with the actual integer you want to use
             const tagListId = 1;
 
@@ -58,83 +66,98 @@
             const videoParams = { tags: selectedTags };
 
             // Fetch filtered data for tags and videos
-            fetchData(`/get_tags/${tagListId}`, tagParams)
-                .then(tagsData => {
-                    const list1Content = document.getElementById("list1-content");
-                    list1Content.innerHTML = ""; // Clear existing content
+            const [tagsData, videosData] = await Promise.all([
+                fetchData(`/get_tags/${tagListId}`, tagParams),
+                fetchData(`/get_videos/${tagListId}`, videoParams)
+            ]);
 
-                    tagsData.forEach(tag => {
-                        const listItem = document.createElement("li");
-                        const tagButton = document.createElement("button");
-                        tagButton.textContent = `${tag.tag} (${tag.count})`;
-                        tagButton.label = `${tag.tag} (${tag.count})`;
-                        tagButton.classList.add("tag-button");
-                        tagButton.disabled = !tag.show; // Disable button if show is false
+            const list1Content = document.getElementById("list1-content");
+            list1Content.innerHTML = ""; // Clear existing content
 
-                        // Check if the tag is in the selectedTags array
-                        if (selectedTags.includes(tag.tag)) {
-                            tagButton.classList.add("selected");
-                        }
+            tagsData.forEach(tag => {
+                const listItem = document.createElement("li");
+                const tagButton = document.createElement("button");
+                tagButton.textContent = tag.tag;
+                tagButton.classList.add("tag-button");
+                tagButton.disabled = !tag.show; // Disable button if show is false
 
-                        // Toggle the selected state when clicked
-                        tagButton.addEventListener("click", () => {
-                            if (selectedTags.includes(tag.tag)) {
-                                // Deselect the tag
-                                const index = selectedTags.indexOf(tag.tag);
-                                selectedTags.splice(index, 1);
-                            } else {
-                                // Select the tag
-                                selectedTags.push(tag.tag);
-                            }
+                // Check if the tag is in the selectedTags array
+                if (selectedTags.includes(tag.tag)) {
+                    tagButton.classList.add("selected");
+                }
 
-                            updateLists(); // Update the lists based on selections
-                        });
+                // Toggle the selected state when clicked
+                tagButton.addEventListener("click", () => {
+                    if (selectedTags.includes(tag.tag)) {
+                        // Deselect the tag
+                        const index = selectedTags.indexOf(tag.tag);
+                        selectedTags.splice(index, 1);
+                    } else {
+                        // Select the tag
+                        selectedTags.push(tag.tag);
+                    }
 
-                        list1Content.appendChild(listItem);
-                        listItem.appendChild(tagButton);
-                    });
+                    updateLists(); // Update the lists based on selections
                 });
 
-            fetchData(`/get_videos/${tagListId}`, videoParams)
-                .then(videosData => {
-                    const list2Content = document.getElementById("list2-content");
-                    list2Content.innerHTML = ""; // Clear existing content
+                list1Content.appendChild(listItem);
+                listItem.appendChild(tagButton);
+            });
 
-                    videosData.forEach(video => {
-                        const listItem = document.createElement("li");
-                        const checkbox = document.createElement("input");
-                        checkbox.type = "checkbox";
-                        checkbox.value = video.link;
-                        checkbox.classList.add("video-checkbox");
-                        checkbox.disabled = !video.show; // Disable checkbox if show is false
+            const list2Content = document.getElementById("list2-content");
+            list2Content.innerHTML = ""; // Clear existing content
 
-                        // Check if the video is in the selectedVideos array
-                        if (selectedVideos.includes(video.link)) {
-                            checkbox.checked = true;
-                        }
+            for (const video of videosData) {
+                const listItem = document.createElement("li");
+                const checkbox = document.createElement("input");
+                checkbox.type = "checkbox";
+                checkbox.value = video.link;
+                checkbox.classList.add("video-checkbox");
+                checkbox.disabled = !video.show; // Disable checkbox if show is false
 
-                        // Toggle the selected state when clicked
-                        checkbox.addEventListener("change", () => {
-                            if (selectedVideos.includes(video.link)) {
-                                // Deselect the video
-                                const index = selectedVideos.indexOf(video.link);
-                                selectedVideos.splice(index, 1);
-                            } else {
-                                // Select the video
-                                selectedVideos.push(video.link);
-                            }
+                // Check if the video is in the selectedVideos array
+                if (selectedVideos.includes(video.link)) {
+                    checkbox.checked = true;
+                }
 
-                            updateLists(); // Update the lists based on selections
-                        });
+                // Toggle the selected state when clicked
+                checkbox.addEventListener("change", () => {
+                    if (selectedVideos.includes(video.link)) {
+                        // Deselect the video
+                        const index = selectedVideos.indexOf(video.link);
+                        selectedVideos.splice(index, 1);
+                    } else {
+                        // Select the video
+                        selectedVideos.push(video.link);
+                    }
 
-                        listItem.appendChild(checkbox);
-                        const label = document.createElement("label");
-                        label.textContent = `Video Link: ${video.link}, Tags: ${video.num_tags}`;
-                        listItem.dataset.tags = video.tags.join(",");
-                        listItem.appendChild(label);
-                        list2Content.appendChild(listItem);
-                    });
+                    updateLists(); // Update the lists based on selections
                 });
+
+                // Fetch video details from YouTube API
+                const videoDetails = await fetchVideoDetails(video.link);
+
+                // Display video thumbnail and title
+                if (videoDetails.items.length > 0) {
+                    const thumbnailUrl = videoDetails.items[0].snippet.thumbnails.medium.url;
+                    const title = videoDetails.items[0].snippet.title;
+
+                    const videoItem = document.createElement("div");
+                    videoItem.classList.add("video-item");
+                    const thumbnail = document.createElement("img");
+                    thumbnail.src = thumbnailUrl;
+                    thumbnail.classList.add("video-thumbnail");
+                    const titleElement = document.createElement("span");
+                    titleElement.textContent = title;
+
+                    videoItem.appendChild(thumbnail);
+                    videoItem.appendChild(titleElement);
+
+                    listItem.appendChild(checkbox);
+                    listItem.appendChild(videoItem);
+                    list2Content.appendChild(listItem);
+                }
+            }
         }
 
         // Initial load with no filters
