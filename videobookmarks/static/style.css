@@ -127,3 +127,43 @@ li {
     opacity: 0.5;
     pointer-events: none; /* Disable pointer events */
 }
+
+/* CSS for video list with updated layout */
+.video-list {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.video-item {
+    width: calc(90% - 16px); /* Adjust the width as needed */
+    margin: 8px;
+    padding: 16px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    text-align: left;
+}
+
+.video-thumbnail {
+    width: auto; /* Set the width for the video thumbnail */
+    height: auto;
+    max-height: 150px; /* Adjust the maximum height as needed */
+    border-radius: 5px;
+    margin-right: 16px; /* Add some spacing to the right */
+}
+
+.video-details {
+    width: 100%; /* Set the width for the video details */
+}
+
+.video-title {
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.video-tag-count {
+    font-size: 14px; /* Adjust font size as needed */
+    color: #666; /* Adjust text color as needed */
+}
+

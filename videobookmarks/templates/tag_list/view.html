@@ -17,14 +17,14 @@
 
      <div class="lists-container">
         <div class="list" id="list1">
-            <h2>List 1 (Tags)</h2>
+            <h2>Tags</h2>
             <ul id="list1-content">
                 <!-- List 1 content will be dynamically generated here -->
             </ul>
         </div>
 
         <div class="list" id="list2">
-            <h2>List 2 (Videos)</h2>
+            <h2>Videos</h2>
             <ul id="list2-content">
                 <!-- List 2 content will be dynamically generated here -->
             </ul>
@@ -126,29 +126,45 @@
 
                     updateLists(); // Update the lists based on selections
                 });
-
-                // Create a div for the video details
                 const videoItem = document.createElement("div");
                 videoItem.classList.add("video-item");
 
-                // Create an img element for the thumbnail
+                // Create a checkbox for video selection
+                const videoCheckbox = document.createElement("input");
+                videoCheckbox.type = "checkbox";
+                videoCheckbox.value = video.link;
+                videoCheckbox.classList.add("video-checkbox");
+
+                // Create a link to open the video when the thumbnail is clicked
+                const videoLink = document.createElement("a");
+                videoLink.href = `https://www.youtube.com/watch?v=${video.link}`;
+                videoLink.target = "_blank"; // Open the link in a new tab
+                videoLink.classList.add("video-thumbnail-link");
+
                 const thumbnail = document.createElement("img");
                 thumbnail.src = video.thumbnail;
                 thumbnail.classList.add("video-thumbnail");
 
-                // Create a span for the title
-                const titleElement = document.createElement("span");
+                const videoDetails = document.createElement("div");
+                videoDetails.classList.add("video-details");
+
+                const titleElement = document.createElement("div");
+                titleElement.classList.add("video-title");
                 titleElement.textContent = video.title;
 
-                // Append thumbnail and title to the video details div
-                videoItem.appendChild(thumbnail);
-                videoItem.appendChild(titleElement);
+                const tagCountElement = document.createElement("div");
+                tagCountElement.classList.add("video-tag-count");
+                tagCountElement.textContent = `Number of Tags: ${video.num_tags}`;
 
-                // Append checkbox and video details to the list item
-                listItem.appendChild(checkbox);
-                listItem.appendChild(videoItem);
+                videoDetails.appendChild(titleElement);
+                videoDetails.appendChild(tagCountElement);
 
-                list2Content.appendChild(listItem);
+                videoLink.appendChild(thumbnail);
+                videoItem.appendChild(videoCheckbox);
+                videoItem.appendChild(videoLink);
+                videoItem.appendChild(videoDetails);
+
+                list2Content.appendChild(videoItem);
             });
         }
 
