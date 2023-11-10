@@ -28,29 +28,26 @@ def get_video_details(video_id):
         "key": YT_API_KEY,
     }
 
-    try:
-        response = requests.get(base_url, params=params)
-        data = response.json()
+    response = requests.get(base_url, params=params)
+    data = response.json()
+    if "items" in data and len(data["items"]) > 0:
+        video = data["items"][0]
+        snippet = video["snippet"]
+        title = snippet.get("title", "")
+        thumbnails = snippet.get("thumbnails", {})
+        thumbnail_url = thumbnails.get("default", {}).get("url", "")
 
-        if "items" in data and len(data["items"]) > 0:
-            video = data["items"][0]
-            snippet = video["snippet"]
-            title = snippet.get("title", "")
-            thumbnails = snippet.get("thumbnails", {})
-            thumbnail_url = thumbnails.get("default", {}).get("url", "")
+        if not title:
+            raise ValueError("Missing title")
+        if not thumbnail_url:
+            raise ValueError("Missing thumbnail")
 
-            return {
-                "title": title,
-                "thumbnail_url": thumbnail_url
-            }
-
-    except Exception as e:
-        print("Error fetching video details:", str(e))
-
-    return {
-        "title": "",
-        "thumbnail_url": ""
-    }
+        return {
+            "title": title,
+            "thumbnail_url": thumbnail_url
+        }
+    else:
+        raise ValueError('data["items"] is empty or missing')
 
 
 @bp.route("/")
@@ -151,23 +148,26 @@ def get_tag_list_videos(tag_list_id):
     db = get_db()
     if tags:
         statement = (
-            "SELECT link, thumbnail_url, title,"
+            "SELECT link, thumbnail, title,"
             " COUNT(*) as num_tags,"
             " ARRAY_AGG(DISTINCT tag) as tags,"
             " ARRAY_AGG(DISTINCT tag) && %s AS show"
             " FROM video v"
             " JOIN tag t ON t.video_id = v.id"
             " WHERE t.tag_list_id = %s"
-            " GROUP BY link, thumbnail_url, title"
+            " GROUP BY link, thumbnail, title"
             " ORDER BY ARRAY_AGG(DISTINCT tag) && %s DESC, count(*) DESC"
         )
     else:
         statement = (
-            "SELECT link, thumbnail_url, title, COUNT(*) as num_tags, ARRAY_AGG(DISTINCT tag) as tags, true AS show"
+            "SELECT link, thumbnail, title,"
+            " COUNT(*) as num_tags,"
+            " ARRAY_AGG(DISTINCT tag) as tags,"
+            " true AS show"
             " FROM video v"
             " JOIN tag t ON t.video_id = v.id"
             " WHERE t.tag_list_id = %s"
-            " GROUP BY link, thumbnail_url, title"
+            " GROUP BY link, thumbnail, title"
             " ORDER BY count(*) DESC"
         )
 

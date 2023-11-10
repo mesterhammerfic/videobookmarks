@@ -69,7 +69,8 @@
             tagsData.forEach(tag => {
                 const listItem = document.createElement("li");
                 const tagButton = document.createElement("button");
-                tagButton.textContent = tag.tag;
+                tagButton.label = tag.tag;
+                tagButton.textContent = `${tag.tag} (${tag.count})`;
                 tagButton.classList.add("tag-button");
                 tagButton.disabled = !tag.show; // Disable button if show is false
 
@@ -126,20 +127,27 @@
                     updateLists(); // Update the lists based on selections
                 });
 
-                // Display video thumbnail and title
+                // Create a div for the video details
                 const videoItem = document.createElement("div");
                 videoItem.classList.add("video-item");
-                const thumbnail = document.createElement("img");
-                thumbnail.src = `https://img.youtube.com/vi/${video.link}/mqdefault.jpg`;
-                thumbnail.classList.add("video-thumbnail");
-                const titleElement = document.createElement("span");
-                titleElement.textContent = `Video Title: ${video.title}, Num Tags: ${video.num_tags}`;
 
+                // Create an img element for the thumbnail
+                const thumbnail = document.createElement("img");
+                thumbnail.src = video.thumbnail;
+                thumbnail.classList.add("video-thumbnail");
+
+                // Create a span for the title
+                const titleElement = document.createElement("span");
+                titleElement.textContent = video.title;
+
+                // Append thumbnail and title to the video details div
                 videoItem.appendChild(thumbnail);
                 videoItem.appendChild(titleElement);
 
+                // Append checkbox and video details to the list item
                 listItem.appendChild(checkbox);
                 listItem.appendChild(videoItem);
+
                 list2Content.appendChild(listItem);
             });
         }
