@@ -136,7 +136,7 @@
 
                 // Create a link to open the video when the thumbnail is clicked
                 const videoLink = document.createElement("a");
-                videoLink.href = `https://www.youtube.com/watch?v=${video.link}`;
+                videoLink.href = `/tagging/{{ tag_list["id"] }}/${video.link}`;
                 videoLink.target = "_blank"; // Open the link in a new tab
                 videoLink.classList.add("video-thumbnail-link");
 
