@@ -51,8 +51,7 @@
 
         // Function to update the lists based on selected filters
         async function updateLists() {
-            // Replace 'tag_list_id' with the actual integer you want to use
-            const tagListId = 1;
+            const tagListId = {{ tag_list["id"] }};
 
             const tagParams = { videoLinks: selectedVideos };
             const videoParams = { tags: selectedTags };

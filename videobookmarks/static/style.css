@@ -1,12 +1,8 @@
-html { font-family: sans-serif; background: #eee; padding: 1rem; }
-a { color: #377ba8; }
-hr { border: none; border-top: 1px solid lightgray; }
 nav { background: lightgray; display: flex; align-items: center; padding: 0 0.5rem; }
 nav h1 { flex: auto; margin: 0; }
-nav h1 a { text-decoration: none; padding: 0.25rem 0.5rem; }
 nav ul  { display: flex; list-style: none; margin: 0; padding: 0; }
 nav ul li a, nav ul li span, header .action { display: block; padding: 0.5rem; }
-.content { padding: 0 1rem 1rem; }
+.content { padding: 0 1rem 1rem; margin: auto, align: center}
 .content > header { border-bottom: 1px solid lightgray; display: flex; align-items: flex-end; }
 .content > header h1 { flex: auto; margin: 1rem 0 0.25rem 0; }
 .flash { margin: 1em 0; padding: 1em; background: #cae6f6; border: 1px solid #377ba8; }
@@ -167,3 +163,51 @@ li {
     color: #666; /* Adjust text color as needed */
 }
 
+/* Style for the tag list articles */
+.tag_list {
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin: 10px;
+    padding: 20px;
+    max-width: 60%
+}
+
+.tag_list header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.tag_list h1 {
+    font-size: 24px;
+    margin: 0;
+}
+
+.tag_list .body {
+    font-size: 16px;
+    margin: 10px 0;
+}
+
+.tag_list .about {
+    font-size: 14px;
+    color: #666;
+}
+
+.tag_list .action {
+    text-decoration: none;
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+.tag_list .action:hover {
+    background-color: #45a049;
+}
+
+.tag_list .action:active {
+    background-color: #4CAF50;
+}
