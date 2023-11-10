@@ -32,6 +32,8 @@
     </div>
 
     <script>
+        // JavaScript code for video list with checkboxes and filtering
+
         // Arrays to store selected tags and videos
         const selectedTags = [];
         const selectedVideos = [];
@@ -100,33 +102,11 @@
             list2Content.innerHTML = ""; // Clear existing content
 
             videosData.forEach(video => {
-                const listItem = document.createElement("li");
-                const checkbox = document.createElement("input");
-                checkbox.type = "checkbox";
-                checkbox.value = video.link;
-                checkbox.classList.add("video-checkbox");
-                checkbox.disabled = !video.show; // Disable checkbox if show is false
-
-                // Check if the video is in the selectedVideos array
-                if (selectedVideos.includes(video.link)) {
-                    checkbox.checked = true;
-                }
-
-                // Toggle the selected state when clicked
-                checkbox.addEventListener("change", () => {
-                    if (selectedVideos.includes(video.link)) {
-                        // Deselect the video
-                        const index = selectedVideos.indexOf(video.link);
-                        selectedVideos.splice(index, 1);
-                    } else {
-                        // Select the video
-                        selectedVideos.push(video.link);
-                    }
-
-                    updateLists(); // Update the lists based on selections
-                });
                 const videoItem = document.createElement("div");
                 videoItem.classList.add("video-item");
+                if (!video.show) {
+                    videoItem.classList.add("hide");;
+                }
 
                 // Create a checkbox for video selection
                 const videoCheckbox = document.createElement("input");
@@ -141,6 +121,7 @@
                 videoLink.classList.add("video-thumbnail-link");
 
                 const thumbnail = document.createElement("img");
+                thumbnail.src = video.thumbnail;
                 thumbnail.src = video.thumbnail;
                 thumbnail.classList.add("video-thumbnail");
 
@@ -163,6 +144,25 @@
                 videoItem.appendChild(videoLink);
                 videoItem.appendChild(videoDetails);
 
+
+                // Check if the video is in the selectedVideos array
+                if (selectedVideos.includes(video.link)) {
+                    videoCheckbox.checked = true;
+                }
+
+                // Toggle the selected state when clicked
+                videoCheckbox.addEventListener("change", () => {
+                    if (selectedVideos.includes(video.link)) {
+                        // Deselect the video
+                        const index = selectedVideos.indexOf(video.link);
+                        selectedVideos.splice(index, 1);
+                    } else {
+                        // Select the video
+                        selectedVideos.push(video.link);
+                    }
+
+                    updateLists(); // Update the lists based on selections
+                });
                 list2Content.appendChild(videoItem);
             });
         }

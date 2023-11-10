@@ -119,7 +119,7 @@ li {
     color: gray;
 }
 
-.video-checkbox[disabled] + label {
+.video-item.hide {
     opacity: 0.5;
     pointer-events: none; /* Disable pointer events */
 }
