@@ -10,6 +10,6 @@
     <input name="name" id="name" value="{{ request.form['name'] }}" required>
     <label for="description">Description</label>
     <textarea name="description" id="description">{{ request.form['description'] }}</textarea>
-    <input type="submit" value="Save">
+    <input type="submit" value="Create" class="button big save">
   </form>
 {% endblock %}

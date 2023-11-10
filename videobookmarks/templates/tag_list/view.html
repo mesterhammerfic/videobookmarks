@@ -2,29 +2,24 @@
 
 {% block header %}
   <h1>{% block title %}Viewing {{tag_list["name"]}}{% endblock %}</h1>
-  <p> {{ tag_list["description"] }} </p>
+    <form method="post" class="link-input">
+    <input name="yt_video_id" id="yt_video_id" placeholder="Youtube Video ID" value="{{ request.form['yt_video_id'] }}" required>
+    <input type="submit" value="Tag Video" class="button">
+    </form>
 {% endblock %}
 
 {% block content %}
-  <form method="post">
-      <h2>Got a link? Tag a Video:</h2>
-    <label for="yt_video_id">Youtube Video ID</label>
-    <input name="yt_video_id" id="yt_video_id" value="{{ request.form['yt_video_id'] }}" required>
-    <input type="submit" value="Tag Video">
-  </form>
-
-      <h2>Wanna browse? Or view existing tags:</h2>
 
      <div class="lists-container">
         <div class="list" id="list1">
-            <h2>Tags</h2>
+            <h1>Tags</h1>
             <ul id="list1-content">
                 <!-- List 1 content will be dynamically generated here -->
             </ul>
         </div>
 
         <div class="list" id="list2">
-            <h2>Videos</h2>
+            <h1>Videos</h1>
             <ul id="list2-content">
                 <!-- List 2 content will be dynamically generated here -->
             </ul>
@@ -72,7 +67,7 @@
                 const tagButton = document.createElement("button");
                 tagButton.label = tag.tag;
                 tagButton.textContent = `${tag.tag} (${tag.count})`;
-                tagButton.classList.add("tag-button");
+                tagButton.classList.add("button");
                 tagButton.disabled = !tag.show; // Disable button if show is false
 
                 // Check if the tag is in the selectedTags array

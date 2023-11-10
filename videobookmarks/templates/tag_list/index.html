@@ -3,21 +3,21 @@
 {% block header %}
   <h1>{% block title %}Tag Lists{% endblock %}</h1>
   {% if g.user %}
-    <a class="action" href="{{ url_for('tag_list.create') }}">New</a>
+    <a class="button big" href="{{ url_for('tag_list.create') }}">Create</a>
   {% endif %}
 {% endblock %}
 
 {% block content %}
   {% for tag_list in tag_lists %}
-    <article class="tag_list">
-      <header>
-        <div>
-          <h1>{{ tag_list['name'] }}</h1>
-          <p class="body">{{ tag_list['description'] }}</p>
-          <div class="about">by {{ tag_list['username'] }}</div>
-        </div>
-        <a class="action" href="{{ url_for('tag_list.view_tag_list', id=tag_list['id']) }}">View</a>
-      </header>
+    <article class="tag-list">
+        <div class="tag-list-info">
+            <div class="tag-list-title">
+              <h1>{{ tag_list['name'] }}</h1>
+              <div class="about">by {{ tag_list['username'] }}</div>
+            </div>
+            <p class="body">{{ tag_list['description'] }}</p>
+            </div>
+        <a class="button big" href="{{ url_for('tag_list.view_tag_list', id=tag_list['id']) }}">Select</a>
     </article>
     {% if not loop.last %}
     {% endif %}

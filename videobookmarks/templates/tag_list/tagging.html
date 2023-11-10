@@ -8,19 +8,16 @@
 {% block content %}
 <!-- 1. The <iframe> (and video player) will replace this <div> tag. -->
     <div id="player"></div>
-    <form>
-        <label for="tag-input">Tag</label>
+    <form class="link-input">
         <input type="text" name="tag" id="tag-input"
-          value="{{ request.form['tag'] }}" required>
-        <button id="add-tag-button">Add Tag</button>
+               value="{{ request.form['tag'] }}"
+               required
+               placeholder="Add tag"
+               oninvalid="must give tag a name"
+        >
+        <button id="add-tag-button" class="button">Add Tag</button>
     </form>
     <table id="tag-list">
-      <thead>
-        <tr>
-          <th>Tag Name</th>
-          <th>Timestamp</th>
-        </tr>
-      </thead>
       <tbody>
         <!-- Tags will be displayed here -->
       </tbody>
