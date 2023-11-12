@@ -97,22 +97,15 @@
             list2Content.innerHTML = ""; // Clear existing content
 
             videosData.forEach(video => {
-                const videoItem = document.createElement("div");
-                videoItem.classList.add("video-item");
-                if (!video.show) {
-                    videoItem.classList.add("hide");;
-                }
-
-                // Create a checkbox for video selection
-                const videoCheckbox = document.createElement("input");
-                videoCheckbox.type = "checkbox";
-                videoCheckbox.value = video.link;
-                videoCheckbox.classList.add("video-checkbox");
+                const videoItem = document.createElement("li");
+                const videoButton = document.createElement("button");
+                videoButton.classList.add("video-item");
+                videoButton.disabled = !video.show; // Disable button if show is false
+                videoButton.label = video.link;
 
                 // Create a link to open the video when the thumbnail is clicked
                 const videoLink = document.createElement("a");
                 videoLink.href = `/tagging/{{ tag_list["id"] }}/${video.link}`;
-                videoLink.target = "_blank"; // Open the link in a new tab
                 videoLink.classList.add("video-thumbnail-link");
 
                 const thumbnail = document.createElement("img");
@@ -135,24 +128,28 @@
                 videoDetails.appendChild(tagCountElement);
 
                 videoLink.appendChild(thumbnail);
-                videoItem.appendChild(videoCheckbox);
-                videoItem.appendChild(videoLink);
-                videoItem.appendChild(videoDetails);
+
+                videoButton.appendChild(videoLink);
+                videoButton.appendChild(videoDetails);
+
+                videoItem.appendChild(videoButton);
 
 
                 // Check if the video is in the selectedVideos array
                 if (selectedVideos.includes(video.link)) {
-                    videoCheckbox.checked = true;
+                    videoButton.classList.add("selected");
                 }
 
+
+
                 // Toggle the selected state when clicked
-                videoCheckbox.addEventListener("change", () => {
+                videoButton.addEventListener("click", () => {
                     if (selectedVideos.includes(video.link)) {
-                        // Deselect the video
+                        // Deselect the tag
                         const index = selectedVideos.indexOf(video.link);
                         selectedVideos.splice(index, 1);
                     } else {
-                        // Select the video
+                        // Select the tag
                         selectedVideos.push(video.link);
                     }
 

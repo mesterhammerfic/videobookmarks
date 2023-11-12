@@ -79,6 +79,7 @@
         .then(() => {
           // After adding the tag, refresh the tag list
           refreshTagList({{ video_id }}, {{ tag_list["id"] }});
+          tagInput.value = '';
         })
         .catch(error => {
           console.error('Error adding tag:', error);
