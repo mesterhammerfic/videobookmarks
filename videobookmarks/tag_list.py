@@ -109,7 +109,7 @@ def get_tag_list_tags(tag_list_id):
             " JOIN video v on t.video_id = v.id"
             " WHERE tag_list_id = %s"
             " GROUP BY tag"
-            " ORDER BY ARRAY_AGG(DISTINCT v.link) && %s DESC, count(*) DESC"
+            " ORDER BY ARRAY_AGG(DISTINCT v.link) && %s DESC, tag ASC"
         )
     else:
         statement = (
@@ -118,7 +118,7 @@ def get_tag_list_tags(tag_list_id):
             " JOIN video v on t.video_id = v.id"
             " WHERE tag_list_id = %s"
             " GROUP BY tag"
-            " ORDER BY count(*) DESC"
+            " ORDER BY tag ASC"
         )
 
     if videos:

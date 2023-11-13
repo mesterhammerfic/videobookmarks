@@ -2,27 +2,31 @@
 
 {% block header %}
   <h1>{% block title %}Viewing {{tag_list["name"]}}{% endblock %}</h1>
-    <form method="post" class="link-input">
-    <input name="yt_video_id" id="yt_video_id" placeholder="Youtube Video ID" value="{{ request.form['yt_video_id'] }}" required>
-    <input type="submit" value="Tag Video" class="button">
-    </form>
 {% endblock %}
 
 {% block content %}
 
      <div class="lists-container">
         <div class="list" id="list1">
-            <h1>Tags</h1>
-            <ul id="list1-content">
+            <div class="list-header">
+                <h1>Tags</h1>
+            </div>
+            <div id="list1-content">
                 <!-- List 1 content will be dynamically generated here -->
-            </ul>
+            </div>
         </div>
 
         <div class="list" id="list2">
-            <h1>Videos</h1>
-            <ul id="list2-content">
+            <div class="list-header">
+                <h1>Videos</h1>
+                <form method="post" class="link-input">
+                <input name="yt_video_id" id="yt_video_id" placeholder="New Youtube Video ID" value="{{ request.form['yt_video_id'] }}" required>
+                <input type="submit" value="Tag Video" class="button">
+                </form>
+            </div>
+            <div id="list2-content">
                 <!-- List 2 content will be dynamically generated here -->
-            </ul>
+            </div>
         </div>
     </div>
 
@@ -63,7 +67,6 @@
             list1Content.innerHTML = ""; // Clear existing content
 
             tagsData.forEach(tag => {
-                const listItem = document.createElement("li");
                 const tagButton = document.createElement("button");
                 tagButton.label = tag.tag;
                 tagButton.textContent = `${tag.tag} (${tag.count})`;
@@ -89,15 +92,13 @@
                     updateLists(); // Update the lists based on selections
                 });
 
-                list1Content.appendChild(listItem);
-                listItem.appendChild(tagButton);
+                list1Content.appendChild(tagButton);
             });
 
             const list2Content = document.getElementById("list2-content");
             list2Content.innerHTML = ""; // Clear existing content
 
             videosData.forEach(video => {
-                const videoItem = document.createElement("li");
                 const videoButton = document.createElement("button");
                 videoButton.classList.add("video-item");
                 videoButton.disabled = !video.show; // Disable button if show is false
@@ -132,15 +133,10 @@
                 videoButton.appendChild(videoLink);
                 videoButton.appendChild(videoDetails);
 
-                videoItem.appendChild(videoButton);
-
-
                 // Check if the video is in the selectedVideos array
                 if (selectedVideos.includes(video.link)) {
                     videoButton.classList.add("selected");
                 }
-
-
 
                 // Toggle the selected state when clicked
                 videoButton.addEventListener("click", () => {
@@ -155,7 +151,7 @@
 
                     updateLists(); // Update the lists based on selections
                 });
-                list2Content.appendChild(videoItem);
+                list2Content.appendChild(videoButton);
             });
         }
 

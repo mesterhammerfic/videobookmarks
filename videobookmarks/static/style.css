@@ -116,7 +116,7 @@ ul {
     font-size: 5rem;
 }
 form {
-    background-color: var(--off-background);
+    background-color: inherit;
     display: flex;
     flex-direction: column;
     row-gap: 10px;
@@ -139,6 +139,18 @@ li {
 }
 #list2{
     row-gap: 5px;
+}
+#list1-content {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    row-gap: .2rem;
+}
+#list2-content {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    row-gap: .5rem;
 }
 .video-item {
     display: flex;
@@ -193,8 +205,15 @@ li {
     flex-direction: row;
     justify-content: center;
     margin-right: 0%;
+    padding: 0;
+    padding-left: 1rem;
 }
 
 #tag-list {
     margin-right: 75%;
+}
+.list-header {
+    display: flex;
+    align-items: center;
+    padding-bottom: 1rem;
 }

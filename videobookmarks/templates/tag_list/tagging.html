@@ -14,7 +14,9 @@
                required
                placeholder="Add tag"
                oninvalid="must give tag a name"
+               list="tagSuggestions"
         >
+        <datalist id="tagSuggestions"></datalist>
         <button id="add-tag-button" class="button">Add Tag</button>
     </form>
     <table id="tag-list">
@@ -130,6 +132,11 @@
           // Process the retrieved data and add tags to the tag list
           data.forEach(tag => {
             addTag(tag.tag, tag.timestamp);
+            tagSuggestions = document.getElementById('tagSuggestions');
+            tagSuggestion = document.createElement('option');
+            tagSuggestion.textContent = tag.tag;
+            tagSuggestion.value = tag.tag;
+            tagSuggestions.appendChild(tagSuggestion)
           });
         })
         .catch(error => {
