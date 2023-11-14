@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask
+from flask import Flask, request, redirect
 
 DB_URL = os.getenv('DB_URL')
 if DB_URL is None:
@@ -47,5 +47,16 @@ def create_app(test_config=None):
     # app.route, while giving the tag_list blueprint a url_prefix, but for
     # the tutorial the tag_list will be the main index
     app.add_url_rule("/", endpoint="index")
+
+    @app.before_request
+    def before_request():
+        if app.env == "development":
+            return
+        if request.is_secure:
+            return
+
+        url = request.url.replace("http://", "https://", 1)
+        code = 301
+        return redirect(url, code=code)
 
     return app
