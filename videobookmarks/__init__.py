@@ -1,7 +1,6 @@
 import os
 
 from flask import Flask
-from flask_talisman import Talisman
 
 DB_URL = os.getenv('DB_URL')
 if DB_URL is None:
@@ -49,4 +48,4 @@ def create_app(test_config=None):
     # the tutorial the tag_list will be the main index
     app.add_url_rule("/", endpoint="index")
 
-    return Talisman(app)
+    return app
