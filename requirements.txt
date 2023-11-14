@@ -14,10 +14,13 @@ Mako==1.3.0
 MarkupSafe==2.1.3
 packaging==23.2
 psycopg==3.1.12
+psycopg-binary==3.1.12
+psycopg-pool==3.2.0
+psycopg2==2.9.9
 requests==2.31.0
 SQLAlchemy==2.0.23
 tomli==2.0.1
 typing_extensions==4.8.0
 urllib3==2.0.7
--e git+https://github.com/mesterhammerfic/videobookmarks@9d30811e431a27dafa1b75ec64baccd0915282fc#egg=videobookmarks
+-e git+https://github.com/mesterhammerfic/videobookmarks@63db149cc1864ada06cc3cf88e70004642cd56a9#egg=videobookmarks
 Werkzeug==3.0.1
