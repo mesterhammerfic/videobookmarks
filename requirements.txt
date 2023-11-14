@@ -16,7 +16,6 @@ packaging==23.2
 psycopg==3.1.12
 psycopg-binary==3.1.12
 psycopg-pool==3.2.0
-psycopg2==2.9.9
 requests==2.31.0
 SQLAlchemy==2.0.23
 tomli==2.0.1
