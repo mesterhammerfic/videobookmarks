@@ -50,7 +50,7 @@ def create_app(test_config=None):
 
     @app.before_request
     def before_request():
-        if app.env == "development":
+        if app.debug:
             return
         if request.is_secure:
             return
