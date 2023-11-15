@@ -51,7 +51,6 @@ def get_video_details(video_id):
 
 
 @bp.route("/")
-@login_required
 def index():
     """
     Ask the user to select or create a tag list
@@ -92,7 +91,6 @@ def get_tag_list(id):
     return tag_list
 
 
-@login_required
 @bp.route("/get_tags/<int:tag_list_id>", methods=("POST",))
 def get_tag_list_tags(tag_list_id):
     """
@@ -137,7 +135,6 @@ def get_tag_list_tags(tag_list_id):
     return tag_list_tags
 
 
-@login_required
 @bp.route("/get_videos/<int:tag_list_id>", methods=("POST",))
 def get_tag_list_videos(tag_list_id):
     """
@@ -188,7 +185,6 @@ def get_tag_list_videos(tag_list_id):
 
 
 @bp.route("/video_tags/<int:video_id>/<int:tag_list_id>", methods=("GET",))
-@login_required
 def get_video_tags(video_id, tag_list_id):
     """
     :param video_id: id of video to get
@@ -286,7 +282,6 @@ def add_tag():
 
 
 @bp.route("/tagging/<int:tag_list_id>/<string:yt_video_id>", methods=("GET", "POST"))
-@login_required
 def tagging(tag_list_id, yt_video_id):
     """Add a new tag to a video"""
     tag_list = get_tag_list(tag_list_id)
@@ -300,7 +295,6 @@ def tagging(tag_list_id, yt_video_id):
 
 
 @bp.route("/<int:id>/view", methods=("GET", "POST"))
-@login_required
 def view_tag_list(id):
     """View a tag list."""
     tag_list = get_tag_list(id)
