@@ -1,6 +1,6 @@
 const youtubeVideoID = document.getElementById("yt-video-id").value
-const videoID = document.getElementById("video-id").value
-const tagListID = document.getElementById("tag-list-id").value
+const videoID = parseInt(document.getElementById("video-id").value)
+const tagListID = parseInt(document.getElementById("tag-list-id").value)
 // This code loads the IFrame Player API code asynchronously.
 var tag = document.createElement('script');
 tag.src = "https://www.youtube.com/iframe_api";
@@ -71,7 +71,7 @@ addTagButton.addEventListener('click', (event) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          yt_video_id: videoID,
+          yt_video_id: youtubeVideoID,
           tag_list_id: tagListID,
           tag: tagName,
           timestamp: currentTime
