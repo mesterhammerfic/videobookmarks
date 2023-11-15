@@ -52,7 +52,33 @@
       function onPlayerReady(event) {
         event.target.playVideo();
       }
+    // Function to fetch data from an endpoint with JSON body
+    async function fetchData(endpoint) {
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ videoLinks: [] })
+        });
+        const data = await response.json();
+        return data;
+    }
+    async function refreshSuggestions(tagListId) {
+      const url = `/get_tags/${tagListId}`;
+      const [tagData] = await Promise.all([fetchData(url)]);
+      // Clear the existing tag suggestions
+      const tagSuggestions = document.getElementById('tagSuggestions');
+      tagSuggestions.innerHTML = '';
 
+      // Process the retrieved data and add tags to the tag list
+      tagData.forEach(tag => {
+        tagSuggestion = document.createElement('option');
+        tagSuggestion.textContent = tag.tag;
+        tagSuggestion.value = tag.tag;
+        tagSuggestions.appendChild(tagSuggestion)
+      });
+    }
     // handle buttons and form for adding tag
     const tagInput = document.getElementById('tag-input');
     const addTagButton = document.getElementById('add-tag-button');
@@ -81,6 +107,7 @@
         .then(() => {
           // After adding the tag, refresh the tag list
           refreshTagList({{ video_id }}, {{ tag_list["id"] }});
+          refreshSuggestions({{ tag_list["id"] }})
           tagInput.value = '';
         })
         .catch(error => {
@@ -89,17 +116,17 @@
     });
 
     // create seek to function so that users can click on a timestamp
-      function jumptoTime(timepoint) {
+    function jumptoTime(timepoint) {
         event.preventDefault();
         player.seekTo(timepoint, true);
         player.playVideo();
-      }
+    }
 
-      function formatTime(seconds) {
-      const minutes = Math.floor(seconds / 60);
-      const remainingSeconds = Math.floor(seconds % 60);
-      const formattedTime = `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
-      return formattedTime;
+    function formatTime(seconds) {
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = Math.floor(seconds % 60);
+        const formattedTime = `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
+        return formattedTime;
     }
     // create a function to add tags
     function addTag(tagName, time) {
@@ -119,10 +146,10 @@
     }
 
     // create request to dynamically update tag list when users updates tags
-      function refreshTagList(videoId, tagListId) {
-      const url = `/video_tags/${videoId}/${tagListId}`;
+    function refreshTagList(videoId, tagListId) {
+        const url = `/video_tags/${videoId}/${tagListId}`;
 
-      fetch(url)
+        fetch(url)
         .then(response => response.json())
         .then(data => {
           // Clear the existing tag list (tbody)
@@ -132,27 +159,23 @@
           // Process the retrieved data and add tags to the tag list
           data.forEach(tag => {
             addTag(tag.tag, tag.timestamp);
-            tagSuggestions = document.getElementById('tagSuggestions');
-            tagSuggestion = document.createElement('option');
-            tagSuggestion.textContent = tag.tag;
-            tagSuggestion.value = tag.tag;
-            tagSuggestions.appendChild(tagSuggestion)
           });
         })
         .catch(error => {
           console.error('Error fetching tags:', error);
         });
     }
+    refreshSuggestions({{ tag_list["id"] }});
     refreshTagList({{ video_id }}, {{ tag_list["id"] }});
 
-      // add event listener for timestamp tags
-      const tagList = document.getElementById('tag-list');
-        tagList.addEventListener('click', (event) => {
-          if (event.target && event.target.matches('button.timestamp')) {
-            const time = parseFloat(event.target.dataset.timestamp);
-            player.seekTo(time);
-          }
-        });
+    // add event listener for timestamp tags
+    const tagList = document.getElementById('tag-list');
+    tagList.addEventListener('click', (event) => {
+      if (event.target && event.target.matches('button.timestamp')) {
+        const time = parseFloat(event.target.dataset.timestamp);
+        player.seekTo(time);
+      }
+    });
     </script>
 
 {% endblock %}
