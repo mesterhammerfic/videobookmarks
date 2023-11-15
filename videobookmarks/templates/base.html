@@ -1,6 +1,9 @@
 <meta
         http-equiv="Content-Security-Policy"
-        content="default-src 'self'; frame-src youtube.com www.youtube.com; script-src youtube.com www.youtube.com;"
+        content="default-src 'self';
+        frame-src youtube.com www.youtube.com;
+        script-src youtube.com www.youtube.com 'sha256-VjQqyGw2OxdcQKN1JxJai1wDDFO//GGDWb7KPGHlBWU=' 'sha256-p3hwR/e0MXWSeNiCVEOBAjQilUumlz6OlcxRHyhuQPM=';
+"
 >
 <!doctype html>
 <title>{% block title %}{% endblock %} - videobookmarks</title>
