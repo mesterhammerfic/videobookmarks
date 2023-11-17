@@ -2,10 +2,11 @@ import os
 import tempfile
 
 import unittest
+import pytest
 
 from videobookmarks import create_app
 from videobookmarks.db import get_db
-from videobookmarks.db import init_db
+from videobookmarks.db import init_app
 
 # read in SQL for populating test data
 with open(os.path.join(os.path.dirname(__file__), "data.sql"), "rb") as f:
