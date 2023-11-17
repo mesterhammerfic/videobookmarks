@@ -119,7 +119,10 @@ class DataModel(abc.ABC):
         ...
 
     @abc.abstractmethod
-    def get_tag_list_videos(self, tag_list_id: int) -> Sequence[GroupedVideo]:
+    def get_tag_list_videos(
+            self, tag_list_id: int,
+            tags: Sequence[str],
+    ) -> Sequence[GroupedVideo]:
         """
         get all videos for a given tag list id
         """
@@ -136,7 +139,12 @@ class DataModel(abc.ABC):
         ...
 
     @abc.abstractmethod
-    def create_tag_list(self, user_id: int) -> int:
+    def create_tag_list(
+            self,
+            name: str,
+            description: str,
+            user_id: int,
+    ) -> int:
         """
         Create a new tag_list for a given user id
         return the id of that tag list
@@ -144,7 +152,19 @@ class DataModel(abc.ABC):
         ...
 
     @abc.abstractmethod
-    def create_or_load_yt_video_id(self, yt_link: str) -> int:
+    def load_video_id(self, yt_link: str) -> Optional[int]:
+        """
+        Check if there is an entry in the video table with the same yt_link
+        If not, create an entry for it
+        """
+        ...
+
+    @abc.abstractmethod
+    def create_video_id(
+            self, yt_link: str,
+            thumbnail_url: str,
+            title: str
+    ) -> int:
         """
         Check if there is an entry in the video table with the same yt_link
         If not, create an entry for it
@@ -157,7 +177,7 @@ class DataModel(abc.ABC):
             tag: str,
             timestamp: float,
             tag_list_id: int,
-            video_id: str,
+            video_id: int,
             user_id: int,
     ) -> int:
         """Add a new tag to a video, return the id of that new tag"""
@@ -270,18 +290,122 @@ class PostgresDataModel(DataModel):
 
         return [GroupedTag(**tag) for tag in tag_list_tags]
 
-    def get_tag_list_videos(self, tag_list_id: int) -> Sequence[GroupedVideo]:
-        pass
+    def get_tag_list_videos(
+            self, tag_list_id: int,
+            tags: Sequence[str],
+    ) -> Sequence[GroupedVideo]:
+        if tags:
+            statement = (
+                "SELECT link, thumbnail, title,"
+                " COUNT(*) as num_tags,"
+                " ARRAY_AGG(DISTINCT tag) as tags,"
+                " ARRAY_AGG(DISTINCT tag) && %s AS show"
+                " FROM video v"
+                " JOIN tag t ON t.video_id = v.id"
+                " WHERE t.tag_list_id = %s"
+                " GROUP BY link, thumbnail, title"
+                " ORDER BY ARRAY_AGG(DISTINCT tag) && %s DESC, count(*) DESC"
+            )
+            arguments = (tags, tag_list_id, tags)
+        else:
+            statement = (
+                "SELECT link, thumbnail, title,"
+                " COUNT(*) as num_tags,"
+                " ARRAY_AGG(DISTINCT tag) as tags,"
+                " true AS show"
+                " FROM video v"
+                " JOIN tag t ON t.video_id = v.id"
+                " WHERE t.tag_list_id = %s"
+                " GROUP BY link, thumbnail, title"
+                " ORDER BY count(*) DESC"
+            )
+            arguments = (tag_list_id,)
+
+        tag_list_videos = (
+            self._connection.execute(
+                statement,
+                arguments,
+            )
+            .fetchall()
+        )
+        return [GroupedVideo(**video) for video in tag_list_videos]
 
     def get_video_tags(self, video_id: int, tag_list_id: int) -> Sequence[Tag]:
-        pass
+        tags = (
+            self._connection.execute(
+                "SELECT"
+                "    user_id,"
+                "    tag_list_id,"
+                "    video_id,"
+                "    tag,"
+                "    youtube_timestamp"
+                " FROM tag t"
+                " JOIN video v ON v.id = t.video_id"
+                " JOIN tag_list tl ON t.tag_list_id = tl.id"
+                " WHERE tl.id = %s AND v.id = %s"
+                " ORDER BY youtube_timestamp ASC",
+                (tag_list_id, video_id),
+            )
+            .fetchall()
+        )
+        return [Tag(**tag) for tag in tags]
 
-    def create_tag_list(self, user_id: int) -> int:
-        pass
+    def create_tag_list(
+            self,
+            name: str,
+            description: str,
+            user_id: int
+    ) -> int:
+        id_ = self._connection.execute(
+            (
+                "INSERT INTO tag_list (name, description, user_id)"
+                " VALUES (%s, %s, %s)"
+                " RETURNING id"
+            ),
+            (name, description, ),
+        ).fetchone()
+        self._connection.commit()
+        return id_
 
-    def create_or_load_yt_video_id(self, yt_link: str) -> int:
-        pass
+    def load_video_id(self, yt_link: str) -> Optional[int]:
+        id_row = self._connection.execute(
+            "SELECT id FROM video WHERE link = %s",
+            (yt_link,),
+        ).fetchone()
+        return id_row
 
-    def add_tag(self, tag: str, timestamp: float, tag_list_id: int, video_id: str, user_id: int) -> int:
-        pass
+    def create_video_id(
+            self, yt_link: str,
+            thumbnail_url: str,
+            title: str
+    ) -> int:
+        id_ = self._connection.execute(
+            (
+                "INSERT INTO video (link, thumbnail, title)"
+                " VALUES (%s, %s, %s)"
+                " RETURNING ID"
+            ),
+            (yt_link, thumbnail_url, title),
+        ).fetchone()
+        self._connection.commit()
+        return id_
+
+    def add_tag(
+            self,
+            tag: str,
+            timestamp: float,
+            tag_list_id: int,
+            video_id: int,
+            user_id: int
+    ) -> int:
+        tag_id_row = self._connection.execute(
+            "INSERT INTO tag"
+            " (tag_list_id, video_id, user_id, tag, youtube_timestamp)"
+            " VALUES (%s, %s, %s, %s, %s)"
+            " RETURNING id",
+            (tag_list_id, video_id, user_id, tag, timestamp)
+        ).fetchone()
+        self._connection.commit()
+        return tag_id_row
+
 
