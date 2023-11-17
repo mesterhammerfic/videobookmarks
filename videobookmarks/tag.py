@@ -1,6 +1,6 @@
 import os
 
-from flask import Blueprint, Response
+from flask import Blueprint, Response, current_app
 from flask import flash
 from flask import g
 from flask import redirect
@@ -10,15 +10,19 @@ from flask import url_for
 from werkzeug.exceptions import abort
 
 from videobookmarks.auth import login_required
+from videobookmarks.datamodel.datamodel import DataModel
 from videobookmarks.db import get_db
 
 import requests
 
 bp = Blueprint("tag_list", __name__)
 
+datamodel: DataModel = current_app.config["datamodel"]
+
 YT_API_KEY = os.getenv("YT_API_KEY")
 if not YT_API_KEY:
     raise ValueError("YT_API_KEY not set")
+
 
 def get_video_details(video_id):
     base_url = "https://www.googleapis.com/youtube/v3/videos"
@@ -55,40 +59,10 @@ def index():
     """
     Ask the user to select or create a tag list
     """
-    db = get_db()
-    tag_lists = db.execute(
-        "SELECT tl.id, name, description, user_id, username"
-        " FROM tag_list tl JOIN users u ON tl.user_id = u.id"
-        " ORDER BY created DESC"
-    ).fetchall()
-    return render_template("tag_list/index.html", tag_lists=tag_lists)
-
-
-def get_tag_list(id):
-    """Get a tag_list.
-
-    Checks that the id exists
-
-    :param id: id of tag_list to get
-    :return: the tag_list
-    :raise 404: if a post with the given id doesn't exist
-    """
-    db = get_db()
-    tag_list = (
-        db.execute(
-            "SELECT tl.id, name, description, username"
-            " FROM tag_list tl"
-            " JOIN users u ON tl.user_id = u.id"
-            " WHERE tl.id = %s",
-            (id,),
-        )
-        .fetchone()
+    return render_template(
+        "tag_list/index.html",
+        tag_lists=datamodel.get_tag_lists()
     )
-
-    if tag_list is None:
-        abort(404, f"Tag list id {id} doesn't exist.")
-
-    return tag_list
 
 
 @bp.route("/get_tags/<int:tag_list_id>", methods=("POST",))
@@ -97,42 +71,9 @@ def get_tag_list_tags(tag_list_id):
     :param tag_list_id: id of tag_list to get
     :return: all the tags in that list
     """
-    videos = request.json["videoLinks"]
-    db = get_db()
-    if videos:
-        statement = (
-            "SELECT tag, COUNT(*) as count, ARRAY_AGG(DISTINCT v.link) as links,"
-            " ARRAY_AGG(DISTINCT v.link) && %s AS show"
-            " FROM tag t"
-            " JOIN video v on t.video_id = v.id"
-            " WHERE tag_list_id = %s"
-            " GROUP BY tag"
-            " ORDER BY ARRAY_AGG(DISTINCT v.link) && %s DESC, tag ASC"
-        )
-    else:
-        statement = (
-            "SELECT tag, COUNT(*) as count, ARRAY_AGG(DISTINCT v.link) as links, true AS show"
-            " FROM tag t"
-            " JOIN video v on t.video_id = v.id"
-            " WHERE tag_list_id = %s"
-            " GROUP BY tag"
-            " ORDER BY tag ASC"
-        )
+    yt_videos_ids = request.json["videoLinks"]
+    datamodel.get_tag_list_tags(tag_list_id, yt_videos_ids)
 
-    if videos:
-        arguments = (videos, tag_list_id, videos)
-    else:
-        arguments = (tag_list_id,)
-
-    tag_list_tags = (
-        db.execute(
-            statement,
-            arguments,
-        )
-        .fetchall()
-    )
-
-    return tag_list_tags
 
 
 @bp.route("/get_videos/<int:tag_list_id>", methods=("POST",))
@@ -289,7 +230,9 @@ def add_tag():
 @bp.route("/tagging/<int:tag_list_id>/<string:yt_video_id>", methods=("GET", "POST"))
 def tagging(tag_list_id, yt_video_id):
     """Add a new tag to a video"""
-    tag_list = get_tag_list(tag_list_id)
+    tag_list = datamodel.get_tag_list(tag_list_id)
+    if tag_list is None:
+        abort(404, f"Tag list id {id} doesn't exist.")
     video_id = create_or_load_yt_video_id(yt_video_id)
     return render_template(
         "tag_list/tagging.html",
@@ -299,10 +242,12 @@ def tagging(tag_list_id, yt_video_id):
     )
 
 
-@bp.route("/<int:id>/view", methods=("GET", "POST"))
-def view_tag_list(id):
+@bp.route("/<int:tag_list_id>/view", methods=("GET", "POST"))
+def view_tag_list(tag_list_id):
     """View a tag list."""
-    tag_list = get_tag_list(id)
+    tag_list = datamodel.get_tag_list(tag_list_id)
+    if tag_list is None:
+        abort(404, f"Tag list id {id} doesn't exist.")
     if request.method == "POST":
         yt_video_id = request.form["yt_video_id"]
         error = None

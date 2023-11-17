@@ -1,13 +1,17 @@
 import abc
 import dataclasses
-from typing import List, Sequence
+from typing import List, Sequence, Optional
 
-from psycopg import Connection
+from psycopg import Connection, connect
+from psycopg.rows import dict_row
+from werkzeug.security import generate_password_hash
+
 
 @dataclasses.dataclass(frozen=True)
 class User:
     id: int
     username: str
+    password: str
 
 @dataclasses.dataclass(frozen=True)
 class TagList:
@@ -15,6 +19,7 @@ class TagList:
     name: str
     description: str
     username: str
+    user_id: int
 
 @dataclasses.dataclass(frozen=True)
 class Tag:
@@ -68,9 +73,23 @@ class GroupedVideo:
 
 class DataModel(abc.ABC):
     @abc.abstractmethod
-    def get_user(self, user_id: int) -> User:
+    def add_user(self, username: str, password: str) -> int:
         """
-        Get all tag_lists.
+        return the id of the user
+        """
+        ...
+
+    @abc.abstractmethod
+    def get_user_with_id(self, user_id: int) -> Optional[User]:
+        """
+        Get the user given an id.
+        """
+        ...
+
+    @abc.abstractmethod
+    def get_user_with_name(self, username: str) -> Optional[User]:
+        """
+        Get the user given a username.
         """
         ...
 
@@ -82,14 +101,18 @@ class DataModel(abc.ABC):
         ...
 
     @abc.abstractmethod
-    def get_tag_list(self, tag_list_id: int) -> TagList:
+    def get_tag_list(self, tag_list_id: int) -> Optional[TagList]:
         """
         Get a tag_list.
         """
         ...
 
     @abc.abstractmethod
-    def get_tag_list_tags(self, tag_list_id: int) -> Sequence[GroupedTag]:
+    def get_tag_list_tags(
+            self,
+            tag_list_id: int,
+            yt_video_ids: Optional[Sequence[str]],
+    ) -> Sequence[GroupedTag]:
         """
         Get all the tags for a given tag list id
         """
@@ -145,26 +168,107 @@ class PostgresDataModel(DataModel):
     """
     The postgres implementation of the DataModel
     """
-    def __init__(self, connection: Connection):
-        self._connection = connection
+    def __init__(self, db_url: str):
+        self._connection = connect(
+            db_url,
+            row_factory=dict_row,
+        )
 
-    def register_user(self, username: str, password: str) -> int:
+    def add_user(self, username: str, password: str) -> int:
         """
         return the id of the user
         """
-        pass
+        new_id = self._connection.execute(
+            (
+                "INSERT INTO users (username, password)"
+                " VALUES (%s, %s)"
+                " RETURNING id"
+            ),
+            (username, generate_password_hash(password)),
+        ).fetchone()
+        self._connection.commit()
+        return new_id
 
-    def get_user(self, user_id: int) -> User:
-        pass
+    def get_user_with_id(self, user_id: int) -> Optional[User]:
+        user = self._connection.execute(
+            "SELECT id, username, password FROM users WHERE id = %s",
+            (user_id,),
+        ).fetchone()
+        if user:
+            return User(**user)
+        else:
+            return None
+
+    def get_user_with_name(self, username: str) -> Optional[User]:
+        user = self._connection.execute(
+            "SELECT id, username, password FROM users WHERE username = %s",
+            (username,),
+        ).fetchone()
+        if user:
+            return User(**user)
+        else:
+            return None
 
     def get_tag_lists(self) -> List[TagList]:
-        pass
+        tag_lists = self._connection.execute(
+            "SELECT tl.id, name, description, user_id, username"
+            " FROM tag_list tl JOIN users u ON tl.user_id = u.id"
+            " ORDER BY created DESC"
+        ).fetchall()
+        return [TagList(**tl) for tl in tag_lists]
 
-    def get_tag_list(self, tag_list_id: int) -> TagList:
-        pass
+    def get_tag_list(self, tag_list_id: int) -> Optional[TagList]:
+        tag_list = (
+            self._connection.execute(
+                "SELECT tl.id, name, description, username, user_id"
+                " FROM tag_list tl"
+                " JOIN users u ON tl.user_id = u.id"
+                " WHERE tl.id = %s",
+                (id,),
+            )
+            .fetchone()
+        )
+        if tag_list:
+            return TagList(**tag_list)
+        else:
+            return None
 
-    def get_tag_list_tags(self, tag_list_id: int) -> Sequence[GroupedTag]:
-        pass
+    def get_tag_list_tags(
+            self,
+            tag_list_id: int,
+            yt_video_ids: Optional[Sequence[str]],
+    ) -> Sequence[GroupedTag]:
+        if yt_video_ids:
+            statement = (
+                "SELECT tag, COUNT(*) as count, ARRAY_AGG(DISTINCT v.link) as links,"
+                " ARRAY_AGG(DISTINCT v.link) && %s AS show"
+                " FROM tag t"
+                " JOIN video v on t.video_id = v.id"
+                " WHERE tag_list_id = %s"
+                " GROUP BY tag"
+                " ORDER BY ARRAY_AGG(DISTINCT v.link) && %s DESC, tag ASC"
+            )
+            arguments = (yt_video_ids, tag_list_id, yt_video_ids)
+        else:
+            statement = (
+                "SELECT tag, COUNT(*) as count, ARRAY_AGG(DISTINCT v.link) as links, true AS show"
+                " FROM tag t"
+                " JOIN video v on t.video_id = v.id"
+                " WHERE tag_list_id = %s"
+                " GROUP BY tag"
+                " ORDER BY tag ASC"
+            )
+            arguments = (tag_list_id,)
+
+        tag_list_tags = (
+            self._connection.execute(
+                statement,
+                arguments,
+            )
+            .fetchall()
+        )
+
+        return [GroupedTag(**tag) for tag in tag_list_tags]
 
     def get_tag_list_videos(self, tag_list_id: int) -> Sequence[GroupedVideo]:
         pass

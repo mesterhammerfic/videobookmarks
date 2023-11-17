@@ -2,6 +2,8 @@ import os
 
 from flask import Flask, request, redirect
 
+from videobookmarks.datamodel.datamodel import PostgresDataModel
+
 DB_URL = os.getenv('DB_URL')
 if DB_URL is None:
     raise ValueError(
@@ -26,21 +28,24 @@ def create_app(test_config=None):
         # load the test config if passed in
         app.config.update(test_config)
 
-    # ensure the instance folder exists
-    try:
-        os.makedirs(app.instance_path)
-    except OSError:
-        pass
-
+    use_new_data_model = False
     # register the database commands
-    from videobookmarks import db
-    db.init_app(app)
+    if not use_new_data_model:
+        from videobookmarks import db
+        db.init_app(app)
 
-    # apply the blueprints to the app
-    from videobookmarks import auth, tag_list
+        # apply the blueprints to the app
+        from videobookmarks import auth, tag_list
 
-    app.register_blueprint(auth.bp)
-    app.register_blueprint(tag_list.bp)
+        app.register_blueprint(auth.bp)
+        app.register_blueprint(tag_list.bp)
+    # else:
+    #     from videobookmarks import new_auth, new_tag_list
+    #
+    #     app.config["datamodel"] = PostgresDataModel(DB_URL)
+    #     app.register_blueprint(new_auth.bp)
+    #     app.register_blueprint(new_tag_list.bp)
+
 
     # make url_for('index') == url_for('tag_list.index')
     # in another app, you might define a separate main index here with
