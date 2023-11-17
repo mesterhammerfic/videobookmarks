@@ -23,7 +23,6 @@ SQLAlchemy==2.0.23
 tomli==2.0.1
 typing_extensions==4.8.0
 urllib3==2.0.7
---e git+https://github.com/mesterhammerfic/videobookmarks@e0ed1782009a12e367eb01c34405c94bc57997e3#egg=vide
-obookmarks
+--e git+https://github.com/mesterhammerfic/videobookmarks@e0ed1782009a12e367eb01c34405c94bc57997e3#egg=videobookmarks
 Werkzeug==3.0.1
 pytest==7.4.3
