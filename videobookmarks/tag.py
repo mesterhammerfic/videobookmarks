@@ -10,7 +10,7 @@ from flask import request
 from flask import url_for
 from werkzeug.exceptions import abort
 
-from videobookmarks.auth import login_required
+from videobookmarks.authenticate import login_required
 from videobookmarks.datamodel.datamodel import DataModel, GroupedTag, GroupedVideo
 from videobookmarks.db import get_datamodel
 

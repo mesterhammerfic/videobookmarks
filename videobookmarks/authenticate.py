@@ -18,15 +18,13 @@ from videobookmarks.db import get_datamodel
 bp = Blueprint("authenticate", __name__, url_prefix="/authenticate")
 
 
-
-
 def login_required(view):
     """View decorator that redirects anonymous users to the login page."""
 
     @functools.wraps(view)
     def wrapped_view(**kwargs):
         if g.user is None:
-            return redirect(url_for("auth.login"))
+            return redirect(url_for("authenticate.login"))
 
         return view(**kwargs)
 

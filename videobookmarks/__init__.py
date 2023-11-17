@@ -31,19 +31,10 @@ def create_app(test_config=None):
     use_new_data_model = True
     # register the database commands
     from videobookmarks import db
-    if not use_new_data_model:
-        db.init_app(app)
-
-        # apply the blueprints to the app
-        from videobookmarks import auth, tag_list
-
-        app.register_blueprint(auth.bp)
-        app.register_blueprint(tag_list.bp)
-    else:
-        from videobookmarks import authenticate, tag
-        db.init_app_datamodel(app)
-        app.register_blueprint(authenticate.bp)
-        app.register_blueprint(tag.bp)
+    from videobookmarks import authenticate, tag
+    db.init_app_datamodel(app)
+    app.register_blueprint(authenticate.bp)
+    app.register_blueprint(tag.bp)
 
     app.add_url_rule("/", endpoint="index")
 

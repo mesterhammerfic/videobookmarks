@@ -358,7 +358,6 @@ class PostgresDataModel(DataModel):
             )
             .fetchall()
         )
-        print([Tag(**tag) for tag in tags])
         return [Tag(**tag) for tag in tags]
 
     def create_tag_list(
