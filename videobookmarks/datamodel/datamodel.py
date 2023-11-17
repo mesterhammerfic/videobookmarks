@@ -24,7 +24,7 @@ class TagList:
 @dataclasses.dataclass(frozen=True)
 class Tag:
     user_id: int
-    tag_list_d: int
+    tag_list_id: int
     video_id: int
     tag: str
     youtube_timestamp: float
@@ -72,6 +72,13 @@ class GroupedVideo:
 
 
 class DataModel(abc.ABC):
+    @abc.abstractmethod
+    def close(self):
+        """
+        closes the connection to the database
+        """
+        ...
+
     @abc.abstractmethod
     def add_user(self, username: str, password: str) -> int:
         """
@@ -194,6 +201,9 @@ class PostgresDataModel(DataModel):
             row_factory=dict_row,
         )
 
+    def close(self):
+        self._connection.close()
+
     def add_user(self, username: str, password: str) -> int:
         """
         return the id of the user
@@ -244,7 +254,7 @@ class PostgresDataModel(DataModel):
                 " FROM tag_list tl"
                 " JOIN users u ON tl.user_id = u.id"
                 " WHERE tl.id = %s",
-                (id,),
+                (tag_list_id,),
             )
             .fetchone()
         )
@@ -334,7 +344,7 @@ class PostgresDataModel(DataModel):
         tags = (
             self._connection.execute(
                 "SELECT"
-                "    user_id,"
+                "    t.user_id,"
                 "    tag_list_id,"
                 "    video_id,"
                 "    tag,"
@@ -348,6 +358,7 @@ class PostgresDataModel(DataModel):
             )
             .fetchall()
         )
+        print([Tag(**tag) for tag in tags])
         return [Tag(**tag) for tag in tags]
 
     def create_tag_list(
@@ -356,7 +367,7 @@ class PostgresDataModel(DataModel):
             description: str,
             user_id: int
     ) -> int:
-        id_ = self._connection.execute(
+        id_row = self._connection.execute(
             (
                 "INSERT INTO tag_list (name, description, user_id)"
                 " VALUES (%s, %s, %s)"
@@ -365,30 +376,32 @@ class PostgresDataModel(DataModel):
             (name, description, ),
         ).fetchone()
         self._connection.commit()
-        return id_
+        return id_row["id"]
 
     def load_video_id(self, yt_link: str) -> Optional[int]:
         id_row = self._connection.execute(
             "SELECT id FROM video WHERE link = %s",
             (yt_link,),
         ).fetchone()
-        return id_row
+        if not id_row:
+            return None
+        return id_row["id"]
 
     def create_video_id(
             self, yt_link: str,
             thumbnail_url: str,
             title: str
     ) -> int:
-        id_ = self._connection.execute(
+        id_row = self._connection.execute(
             (
                 "INSERT INTO video (link, thumbnail, title)"
                 " VALUES (%s, %s, %s)"
-                " RETURNING ID"
+                " RETURNING id"
             ),
             (yt_link, thumbnail_url, title),
         ).fetchone()
         self._connection.commit()
-        return id_
+        return id_row["id"]
 
     def add_tag(
             self,

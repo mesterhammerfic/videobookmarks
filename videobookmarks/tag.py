@@ -12,13 +12,11 @@ from werkzeug.exceptions import abort
 
 from videobookmarks.auth import login_required
 from videobookmarks.datamodel.datamodel import DataModel, GroupedTag, GroupedVideo
-from videobookmarks.db import get_db
+from videobookmarks.db import get_datamodel
 
 import requests
 
-bp = Blueprint("tag_list", __name__)
-
-datamodel: DataModel = current_app.config["datamodel"]
+bp = Blueprint("tag", __name__)
 
 YT_API_KEY = os.getenv("YT_API_KEY")
 if not YT_API_KEY:
@@ -60,6 +58,7 @@ def index():
     """
     Ask the user to select or create a tag list
     """
+    datamodel = get_datamodel()
     return render_template(
         "tag_list/index.html",
         tag_lists=datamodel.get_tag_lists()
@@ -73,6 +72,7 @@ def get_tag_list_tags(tag_list_id) -> Sequence[GroupedTag]:
     :return: all the tags in that list
     """
     yt_videos_ids = request.json["videoLinks"]
+    datamodel = get_datamodel()
     return datamodel.get_tag_list_tags(tag_list_id, yt_videos_ids)
 
 
@@ -83,6 +83,7 @@ def get_tag_list_videos(tag_list_id) -> Sequence[GroupedVideo]:
     :return: all the videos in that list
     """
     tags = request.json["tags"]
+    datamodel = get_datamodel()
     return datamodel.get_tag_list_videos(tag_list_id, tags)
 
 
@@ -93,6 +94,7 @@ def get_video_tags(video_id, tag_list_id):
     :param tag_list_id: id of tag_list to get
     :return: all the tags in that list that correspond to that video
     """
+    datamodel = get_datamodel()
     return datamodel.get_video_tags(video_id, tag_list_id)
 
 
@@ -103,7 +105,7 @@ def create():
     if request.method == "POST":
         name = request.form["name"]
         description = request.form["description"]
-        user_id = g.user["id"]
+        user_id = g.user.id
 
         error = None
         if not name:
@@ -112,13 +114,15 @@ def create():
         if error is not None:
             flash(error)
         else:
+            datamodel = get_datamodel()
             datamodel.create_tag_list(name, description, user_id)
-            return redirect(url_for("tag_list.index"))
+            return redirect(url_for("tag.index"))
 
     return render_template("tag_list/create.html")
 
 
 def create_or_load_yt_video_id(yt_link: str):
+    datamodel = get_datamodel()
     video_id = datamodel.load_video_id(yt_link)
     if not video_id:
         video_details = get_video_details(yt_link)
@@ -139,7 +143,7 @@ def add_tag():
     timestamp = request.json["timestamp"]
     tag_list_id = request.json["tag_list_id"]
     yt_video_id = request.json["yt_video_id"]
-    user_id = g.user["id"]
+    user_id = g.user.id
     error = None
 
     if not tag:
@@ -149,6 +153,7 @@ def add_tag():
         return Response(422)
     else:
         video_id = create_or_load_yt_video_id(yt_video_id)
+        datamodel = get_datamodel()
         tag_id = datamodel.add_tag(
             tag,
             timestamp,
@@ -163,6 +168,7 @@ def add_tag():
 @bp.route("/tagging/<int:tag_list_id>/<string:yt_video_id>", methods=("GET", "POST"))
 def tagging(tag_list_id, yt_video_id):
     """Add a new tag to a video"""
+    datamodel = get_datamodel()
     tag_list = datamodel.get_tag_list(tag_list_id)
     if tag_list is None:
         abort(404, f"Tag list id {id} doesn't exist.")
@@ -178,6 +184,7 @@ def tagging(tag_list_id, yt_video_id):
 @bp.route("/<int:tag_list_id>/view", methods=("GET", "POST"))
 def view_tag_list(tag_list_id):
     """View a tag list."""
+    datamodel = get_datamodel()
     tag_list = datamodel.get_tag_list(tag_list_id)
     if tag_list is None:
         abort(404, f"Tag list id {id} doesn't exist.")
@@ -192,7 +199,7 @@ def view_tag_list(tag_list_id):
             flash(error)
         else:
             return redirect(
-                f"/tagging/{tag_list['id']}/{yt_video_id}"
+                f"/tagging/{tag_list.id}/{yt_video_id}"
             )
     return render_template(
         "tag_list/view.html",

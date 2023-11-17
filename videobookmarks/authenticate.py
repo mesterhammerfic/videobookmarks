@@ -13,11 +13,11 @@ from werkzeug.security import check_password_hash
 from werkzeug.security import generate_password_hash
 
 from videobookmarks.datamodel.datamodel import DataModel
-from videobookmarks.db import get_db
+from videobookmarks.db import get_datamodel
 
 bp = Blueprint("authenticate", __name__, url_prefix="/authenticate")
 
-datamodel: DataModel = current_app.config["datamodel"]
+
 
 
 def login_required(view):
@@ -41,6 +41,7 @@ def load_logged_in_user():
     if user_id is None:
         g.user = None
     else:
+        datamodel = get_datamodel()
         g.user = datamodel.get_user_with_id(user_id)
 
 
@@ -55,7 +56,7 @@ def register():
     if request.method == "POST":
         username = request.form["username"]
         password = request.form["password"]
-        db = get_db()
+        datamodel = get_datamodel()
         error = None
 
         if not username:
@@ -72,7 +73,7 @@ def register():
                 error = f"User {username} is already registered."
             else:
                 # Success, go to the login page.
-                return redirect(url_for("auth.login"))
+                return redirect(url_for("authenticate.login"))
         flash(error)
     return render_template("auth/register.html")
 
@@ -84,7 +85,7 @@ def login():
         username = request.form["username"]
         password = request.form["password"]
         error = None
-
+        datamodel = get_datamodel()
         user = datamodel.get_user_with_name(username)
         if user is None:
             error = "Incorrect username."

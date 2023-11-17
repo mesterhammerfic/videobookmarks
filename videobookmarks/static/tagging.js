@@ -132,7 +132,7 @@ function refreshTagList(videoId, tagListId) {
 
         // Process the retrieved data and add tags to the tag list
         data.forEach(tag => {
-            addTag(tag.tag, tag.timestamp);
+            addTag(tag.tag, tag.youtube_timestamp);
         });
     })
     .catch(error => {
