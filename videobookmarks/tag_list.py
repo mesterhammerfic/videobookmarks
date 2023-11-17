@@ -194,7 +194,12 @@ def get_video_tags(video_id, tag_list_id):
     db = get_db()
     tags = (
         db.execute(
-            "SELECT tag, youtube_timestamp"
+            "SELECT"
+            "    user_id,"
+            "    tag_list_id,"
+            "    video_id,"
+            "    tag,"
+            "    youtube_timestamp"
             " FROM tag t"
             " JOIN video v ON v.id = t.video_id"
             " JOIN tag_list tl ON t.tag_list_id = tl.id"
