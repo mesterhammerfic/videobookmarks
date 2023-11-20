@@ -28,7 +28,6 @@ def create_app(test_config=None):
         # load the test config if passed in
         app.config.update(test_config)
 
-    use_new_data_model = True
     # register the database commands
     from videobookmarks import db
     from videobookmarks import authenticate, tag

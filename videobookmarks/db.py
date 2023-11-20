@@ -18,28 +18,6 @@ def get_datamodel():
         g.datamodel = PostgresDataModel(current_app.config["DB_URL"])
     return g.datamodel
 
-def get_db():
-    """Connect to the application's configured database. The connection
-    is unique for each request and will be reused if this is called
-    again.
-    """
-    if "db" not in g:
-        g.db = psycopg.connect(
-            current_app.config["DB_URL"],
-            row_factory=dict_row
-        )
-    return g.db
-
-
-def close_db(e=None):
-    """If this request connected to the database, close the
-    connection.
-    """
-    db = g.pop("db", None)
-
-    if db is not None:
-        db.close()
-
 
 def close_datamodel(e=None):
     """If this request connected to the database, close the
@@ -49,13 +27,6 @@ def close_datamodel(e=None):
 
     if datamodel is not None:
         datamodel.close()
-
-
-def init_app(app):
-    """Register database functions with the Flask app. This is called by
-    the application factory.
-    """
-    app.teardown_appcontext(close_db)
 
 
 def init_app_datamodel(app):
