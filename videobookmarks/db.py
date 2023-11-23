@@ -1,8 +1,3 @@
-import os
-import psycopg
-from psycopg.rows import dict_row
-
-import click
 from flask import current_app
 from flask import g
 

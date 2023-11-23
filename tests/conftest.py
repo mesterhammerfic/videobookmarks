@@ -4,30 +4,42 @@ import tempfile
 import pytest
 
 from videobookmarks import create_app
+from videobookmarks.db import get_datamodel
+from videobookmarks.db import init_app_datamodel
 
-# read in SQL for populating test data
-with open(os.path.join(os.path.dirname(__file__), "data.sql"), "rb") as f:
-    _data_sql = f.read().decode("utf8")
+DB_URL = os.getenv('DB_URL')
+if DB_URL is None:
+    raise ValueError(
+        "Missing DB_URL environment variable, could not connect to Database"
+    )
+
+if "_test" not in DB_URL:
+    raise ValueError(
+        "Make sure you are using the test database, not the normal one"
+    )
+
 
 
 @pytest.fixture
 def app():
-    """Create and configure a new app instance for each test."""
-    # create a temporary file to isolate the database for each test
-    db_fd, db_path = tempfile.mkstemp()
     # create the app with common test config
-    app = create_app({"TESTING": True, "DATABASE": db_path})
+    app = create_app({"TESTING": True, "DATABASE": DB_URL})
 
-    # create the database and load test data
+    # connect to the database using the DB_URL provided above.
     with app.app_context():
-        init_db()
-        get_db().executescript(_data_sql)
+        init_app_datamodel(app)
 
     yield app
-
-    # close and remove the temporary database
-    os.close(db_fd)
-    os.unlink(db_path)
+    with app.app_context():
+        # this is the teardown
+        dm = get_datamodel()
+        dm._connection.execute(
+            "TRUNCATE users CASCADE;"
+            "TRUNCATE tag CASCADE;"
+            "TRUNCATE tag_list CASCADE;"
+            "TRUNCATE video CASCADE;"
+        )
+        dm._connection.commit()
 
 
 @pytest.fixture
@@ -53,6 +65,27 @@ class AuthActions:
 
     def logout(self):
         return self._client.get("/auth/logout")
+
+
+class CreateTagList:
+    def __init__(self, app, suffix=None):
+        with app.app_context():
+            datamodel = get_datamodel()
+            suffix = suffix or ''
+            self.username = "na" + suffix
+            self.user_id = datamodel.add_user(self.username, "na")
+            self.video_id = datamodel.create_video_id(
+                "youtube link",
+                "fakethumbnailurl.com",
+                "fake youtube title",
+            )
+            self.tag_list_name = 'tag list name' + suffix
+            self.tag_list_desc = 'tag list description'
+            self.tag_list_id = datamodel.create_tag_list(
+                self.tag_list_name,
+                self.tag_list_desc,
+                self.user_id,
+            )
 
 
 @pytest.fixture

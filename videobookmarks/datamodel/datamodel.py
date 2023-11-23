@@ -217,7 +217,7 @@ class PostgresDataModel(DataModel):
             (username, generate_password_hash(password)),
         ).fetchone()
         self._connection.commit()
-        return new_id
+        return new_id["id"]
 
     def get_user_with_id(self, user_id: int) -> Optional[User]:
         user = self._connection.execute(
@@ -372,7 +372,7 @@ class PostgresDataModel(DataModel):
                 " VALUES (%s, %s, %s)"
                 " RETURNING id"
             ),
-            (name, description, ),
+            (name, description, user_id),
         ).fetchone()
         self._connection.commit()
         return id_row["id"]
@@ -418,6 +418,6 @@ class PostgresDataModel(DataModel):
             (tag_list_id, video_id, user_id, tag, timestamp)
         ).fetchone()
         self._connection.commit()
-        return tag_id_row
+        return tag_id_row["id"]
 
 

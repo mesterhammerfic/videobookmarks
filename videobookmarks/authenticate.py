@@ -10,7 +10,6 @@ from flask import request
 from flask import session
 from flask import url_for
 from werkzeug.security import check_password_hash
-from werkzeug.security import generate_password_hash
 
 from videobookmarks.datamodel.datamodel import DataModel
 from videobookmarks.db import get_datamodel
