@@ -286,3 +286,16 @@ def test_get_video_tags(app):
             ),
         ]
         assert tags_2 == expected_tags_2
+
+
+def test_load_video_id(app):
+    with app.app_context():
+        datamodel = get_datamodel()
+        link = "abc123"
+        expected_video_id = datamodel.create_video_id(
+            link,
+            "fakethumbnailurl.com",
+            "fake youtube title",
+        )
+        actual_video_id = datamodel.load_video_id(link)
+        assert actual_video_id == expected_video_id
