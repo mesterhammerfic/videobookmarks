@@ -266,7 +266,7 @@ class PostgresDataModel(DataModel):
     def get_tag_list_tags(
             self,
             tag_list_id: int,
-            yt_video_ids: Optional[Sequence[str]],
+            yt_video_ids: Optional[Sequence[str]]=None,
     ) -> Sequence[GroupedTag]:
         if yt_video_ids:
             statement = (
@@ -302,7 +302,7 @@ class PostgresDataModel(DataModel):
 
     def get_tag_list_videos(
             self, tag_list_id: int,
-            tags: Sequence[str],
+            tags: Optional[Sequence[str]]=None,
     ) -> Sequence[GroupedVideo]:
         if tags:
             statement = (

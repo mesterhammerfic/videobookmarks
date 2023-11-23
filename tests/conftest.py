@@ -4,6 +4,7 @@ import tempfile
 import pytest
 
 from videobookmarks import create_app
+from videobookmarks.datamodel.datamodel import TagList
 from videobookmarks.db import get_datamodel
 from videobookmarks.db import init_app_datamodel
 
@@ -75,7 +76,7 @@ class CreateTagList:
             self.username = "na" + suffix
             self.user_id = datamodel.add_user(self.username, "na")
             self.video_id = datamodel.create_video_id(
-                "youtube link",
+                "youtube link" + suffix,
                 "fakethumbnailurl.com",
                 "fake youtube title",
             )
@@ -87,6 +88,15 @@ class CreateTagList:
                 self.user_id,
             )
 
+    @property
+    def expected_tag_list(self):
+        return TagList(
+            id=self.tag_list_id,
+            name=self.tag_list_name,
+            description=self.tag_list_desc,
+            username=self.username,
+            user_id=self.user_id,
+        )
 
 @pytest.fixture
 def auth(client):

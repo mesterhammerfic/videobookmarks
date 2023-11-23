@@ -1,3 +1,4 @@
+from videobookmarks.datamodel.datamodel import GroupedTag, GroupedVideo, Tag
 from videobookmarks.db import get_datamodel
 from werkzeug.security import check_password_hash
 from .conftest import CreateTagList
@@ -77,7 +78,6 @@ def test_add_tag(app):
             " WHERE id = %s",
             (tag_id,)
         ).fetchone()
-        print(tag)
         assert tag["tag"] == test_tag
         assert tag["youtube_timestamp"] == test_timestamp
         assert tag["tag_list_id"] == tag_list_artifacts.tag_list_id
@@ -91,5 +91,198 @@ def test_get_tag_lists(app):
         tag_list_artifacts_2 = CreateTagList(app, suffix="_2")
         tag_list_artifacts_3 = CreateTagList(app, suffix="_3")
         datamodel = get_datamodel()
+        expected_tag_lists = [
+            tag_list_artifacts_3.expected_tag_list,
+            tag_list_artifacts_2.expected_tag_list,
+            tag_list_artifacts_1.expected_tag_list,
+        ]
         tag_lists = datamodel.get_tag_lists()
-        print(tag_lists)
+        assert tag_lists == expected_tag_lists
+
+
+def test_get_tag_list_tags(app):
+    with app.app_context():
+        tag_list_artifacts_0 = CreateTagList(app, suffix='_0')
+        tag_list_artifacts_1 = CreateTagList(app, suffix='_1')
+        datamodel = get_datamodel()
+        test_tag = "na_1"
+        test_timestamp = 0
+        datamodel.add_tag(
+            test_tag,
+            test_timestamp,
+            tag_list_artifacts_0.tag_list_id,
+            tag_list_artifacts_0.video_id,
+            tag_list_artifacts_0.user_id,
+        )
+        test_tag = "na_1"
+        test_timestamp = 0
+        datamodel.add_tag(
+            test_tag,
+            test_timestamp,
+            tag_list_artifacts_0.tag_list_id,
+            tag_list_artifacts_1.video_id,
+            tag_list_artifacts_1.user_id,
+        )
+        test_tag = "na_2"
+        test_timestamp = 0
+        datamodel.add_tag(
+            test_tag,
+            test_timestamp,
+            tag_list_artifacts_0.tag_list_id,
+            tag_list_artifacts_1.video_id,
+            tag_list_artifacts_1.user_id,
+        )
+        tags = datamodel.get_tag_list_tags(tag_list_artifacts_0.tag_list_id)
+        expected_tags = [
+            GroupedTag(
+                tag='na_1',
+                count=2,
+                links=['youtube link_0', 'youtube link_1'],
+                show=True
+            ),
+            GroupedTag(
+                tag='na_2',
+                count=1,
+                links=['youtube link_1'],
+                show=True
+            ),
+        ]
+        import pprint
+        pprint.pprint(tags)
+        assert tags == expected_tags
+
+
+def test_get_tag_list_videos(app):
+    with app.app_context():
+        tag_list_artifacts_0 = CreateTagList(app, suffix='_0')
+        tag_list_artifacts_1 = CreateTagList(app, suffix='_1')
+        datamodel = get_datamodel()
+        test_tag = "na_1"
+        test_timestamp = 0
+        datamodel.add_tag(
+            test_tag,
+            test_timestamp,
+            tag_list_artifacts_0.tag_list_id,
+            tag_list_artifacts_0.video_id,
+            tag_list_artifacts_0.user_id,
+        )
+        test_tag = "na_1"
+        test_timestamp = 0
+        datamodel.add_tag(
+            test_tag,
+            test_timestamp,
+            tag_list_artifacts_0.tag_list_id,
+            tag_list_artifacts_1.video_id,
+            tag_list_artifacts_1.user_id,
+        )
+        test_tag = "na_2"
+        test_timestamp = 0
+        datamodel.add_tag(
+            test_tag,
+            test_timestamp,
+            tag_list_artifacts_0.tag_list_id,
+            tag_list_artifacts_1.video_id,
+            tag_list_artifacts_1.user_id,
+        )
+        videos = datamodel.get_tag_list_videos(tag_list_artifacts_0.tag_list_id)
+        expected_videos = [
+            GroupedVideo(
+                link='youtube link_1',
+                thumbnail='fakethumbnailurl.com',
+                title='fake youtube title',
+                num_tags=2,
+                tags=['na_1', 'na_2'],
+                show=True,
+            ),
+            GroupedVideo(
+                link='youtube link_0',
+                thumbnail='fakethumbnailurl.com',
+                title='fake youtube title',
+                num_tags=1,
+                tags=['na_1'],
+                show=True,
+            )
+        ]
+        assert videos == expected_videos
+
+
+def test_get_video_tags(app):
+    with app.app_context():
+        tag_list_artifacts_0 = CreateTagList(app, suffix='_0')
+        tag_list_artifacts_1 = CreateTagList(app, suffix='_1')
+        datamodel = get_datamodel()
+
+        # combo 1
+        test_tag = "na_1"
+        test_timestamp = 0
+        datamodel.add_tag(
+            test_tag,
+            test_timestamp,
+            tag_list_artifacts_0.tag_list_id,
+            tag_list_artifacts_0.video_id,
+            tag_list_artifacts_0.user_id,
+        )
+        tags_0 = datamodel.get_video_tags(
+            tag_list_artifacts_0.video_id,
+            tag_list_artifacts_0.tag_list_id,
+        )
+        expected_tags_0 = [
+            Tag(
+                user_id=tag_list_artifacts_0.user_id,
+                tag_list_id=tag_list_artifacts_0.tag_list_id,
+                video_id=tag_list_artifacts_0.video_id,
+                tag='na_1',
+                youtube_timestamp=0.0
+            ),
+        ]
+        assert tags_0 == expected_tags_0
+
+        # combo 2
+        test_tag = "na_1"
+        test_timestamp = 0
+        datamodel.add_tag(
+            test_tag,
+            test_timestamp,
+            tag_list_artifacts_0.tag_list_id,
+            tag_list_artifacts_1.video_id,
+            tag_list_artifacts_1.user_id,
+        )
+        tags_1 = datamodel.get_video_tags(
+            tag_list_artifacts_1.video_id,
+            tag_list_artifacts_0.tag_list_id,
+        )
+        expected_tags_1 = [
+            Tag(
+                user_id=tag_list_artifacts_1.user_id,
+                tag_list_id=tag_list_artifacts_0.tag_list_id,
+                video_id=tag_list_artifacts_1.video_id,
+                tag='na_1',
+                youtube_timestamp=0.0
+            ),
+        ]
+        assert tags_1 == expected_tags_1
+
+        # combo 3
+        test_tag = "na_2"
+        test_timestamp = 0
+        datamodel.add_tag(
+            test_tag,
+            test_timestamp,
+            tag_list_artifacts_1.tag_list_id,
+            tag_list_artifacts_1.video_id,
+            tag_list_artifacts_1.user_id,
+        )
+        tags_2 = datamodel.get_video_tags(
+            tag_list_artifacts_1.video_id,
+            tag_list_artifacts_1.tag_list_id,
+        )
+        expected_tags_2 = [
+            Tag(
+                user_id=tag_list_artifacts_1.user_id,
+                tag_list_id=tag_list_artifacts_1.tag_list_id,
+                video_id=tag_list_artifacts_1.video_id,
+                tag='na_2',
+                youtube_timestamp=0.0
+            ),
+        ]
+        assert tags_2 == expected_tags_2
