@@ -33,6 +33,22 @@ def test_get_user_with_id(app):
         assert name == user.username
 
 
+def test_get_user_no_user_found(app):
+    with app.app_context():
+        datamodel = get_datamodel()
+        name = 'test_name'
+        password = 'test_password'
+        datamodel.add_user(name, password)
+        # the sql database does not contain negative ids
+        non_existent_id = -1
+        user = datamodel.get_user_with_id(non_existent_id)
+        assert user == None
+        # and here's a name we haven't added yet
+        non_existent_name = "blah blah blah"
+        user = datamodel.get_user_with_name(non_existent_name)
+        assert user == None
+
+
 def test_get_user_with_name(app):
     with app.app_context():
         datamodel = get_datamodel()
@@ -57,6 +73,19 @@ def test_create_tag_list(app):
         assert tag_list.user_id == user_id
         assert tag_list.description == desc
         assert tag_list.name == name
+
+
+def test_get_tag_list_no_tag_list_found(app):
+    with app.app_context():
+        datamodel = get_datamodel()
+        username = "na"
+        user_id = datamodel.add_user(username, "na")
+        name = 'tag list name'
+        desc = 'tag list description'
+        datamodel.create_tag_list(name, desc, user_id)
+        non_existent_id = -1
+        tag_list = datamodel.get_tag_list(non_existent_id)
+        assert tag_list == None
 
 
 def test_add_tag(app):
@@ -147,8 +176,56 @@ def test_get_tag_list_tags(app):
                 show=True
             ),
         ]
-        import pprint
-        pprint.pprint(tags)
+        assert tags == expected_tags
+
+
+def test_get_tag_list_tags_with_video_list(app):
+    with app.app_context():
+        tag_list_artifacts_0 = CreateTagList(app, suffix='_0')
+        tag_list_artifacts_1 = CreateTagList(app, suffix='_1')
+        datamodel = get_datamodel()
+        test_tag = "na_1"
+        test_timestamp = 0
+        datamodel.add_tag(
+            test_tag,
+            test_timestamp,
+            tag_list_artifacts_0.tag_list_id,
+            tag_list_artifacts_0.video_id,
+            tag_list_artifacts_0.user_id,
+        )
+        test_tag = "na_1"
+        test_timestamp = 0
+        datamodel.add_tag(
+            test_tag,
+            test_timestamp,
+            tag_list_artifacts_0.tag_list_id,
+            tag_list_artifacts_1.video_id,
+            tag_list_artifacts_1.user_id,
+        )
+        test_tag = "na_2"
+        test_timestamp = 0
+        datamodel.add_tag(
+            test_tag,
+            test_timestamp,
+            tag_list_artifacts_0.tag_list_id,
+            tag_list_artifacts_1.video_id,
+            tag_list_artifacts_1.user_id,
+        )
+        tags = datamodel.get_tag_list_tags(tag_list_artifacts_0.tag_list_id, ['youtube link_0'])
+        expected_tags = [
+            GroupedTag(
+                tag='na_1',
+                count=2,
+                links=['youtube link_0', 'youtube link_1'],
+                show=True
+            ),
+            GroupedTag(
+                tag='na_2',
+                count=1,
+                links=['youtube link_1'],
+                show=False
+            ),
+        ]
         assert tags == expected_tags
 
 
@@ -201,6 +278,60 @@ def test_get_tag_list_videos(app):
                 num_tags=1,
                 tags=['na_1'],
                 show=True,
+            )
+        ]
+        assert videos == expected_videos
+
+
+def test_get_tag_list_videos_with_tags(app):
+    with app.app_context():
+        tag_list_artifacts_0 = CreateTagList(app, suffix='_0')
+        tag_list_artifacts_1 = CreateTagList(app, suffix='_1')
+        datamodel = get_datamodel()
+        test_tag = "na_1"
+        test_timestamp = 0
+        datamodel.add_tag(
+            test_tag,
+            test_timestamp,
+            tag_list_artifacts_0.tag_list_id,
+            tag_list_artifacts_0.video_id,
+            tag_list_artifacts_0.user_id,
+        )
+        test_tag = "na_1"
+        test_timestamp = 0
+        datamodel.add_tag(
+            test_tag,
+            test_timestamp,
+            tag_list_artifacts_0.tag_list_id,
+            tag_list_artifacts_1.video_id,
+            tag_list_artifacts_1.user_id,
+        )
+        test_tag = "na_2"
+        test_timestamp = 0
+        datamodel.add_tag(
+            test_tag,
+            test_timestamp,
+            tag_list_artifacts_0.tag_list_id,
+            tag_list_artifacts_1.video_id,
+            tag_list_artifacts_1.user_id,
+        )
+        videos = datamodel.get_tag_list_videos(tag_list_artifacts_0.tag_list_id, ["na_2"])
+        expected_videos = [
+            GroupedVideo(
+                link='youtube link_1',
+                thumbnail='fakethumbnailurl.com',
+                title='fake youtube title',
+                num_tags=2,
+                tags=['na_1', 'na_2'],
+                show=True,
+            ),
+            GroupedVideo(
+                link='youtube link_0',
+                thumbnail='fakethumbnailurl.com',
+                title='fake youtube title',
+                num_tags=1,
+                tags=['na_1'],
+                show=False,
             )
         ]
         assert videos == expected_videos
@@ -299,3 +430,17 @@ def test_load_video_id(app):
         )
         actual_video_id = datamodel.load_video_id(link)
         assert actual_video_id == expected_video_id
+
+
+def test_load_video_id_no_id_found(app):
+    with app.app_context():
+        datamodel = get_datamodel()
+        link = "abc123"
+        expected_video_id = datamodel.create_video_id(
+            link,
+            "fakethumbnailurl.com",
+            "fake youtube title",
+        )
+        fake_video_link = "nonexistant_link"
+        actual_video_id = datamodel.load_video_id(fake_video_link)
+        assert actual_video_id == None
