@@ -1,20 +1,8 @@
 import os
-import tempfile
 import unittest
 from videobookmarks import create_app
 from videobookmarks.db import get_db
-from .fixtures import AuthActions
 from flask import g, session
-
-DB_URL = os.getenv('DB_URL')
-if DB_URL is None:
-    raise ValueError(
-        "Missing DB_URL environment variable, could not connect to Database"
-    )
-if "_test" not in DB_URL:
-    raise ValueError(
-        "Make sure you are using the test database, not the normal one"
-    )
 
 # read in SQL for populating test data
 with open(os.path.join(os.path.dirname(__file__), "data.sql"), "rb") as f:

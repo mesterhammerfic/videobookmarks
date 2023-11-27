@@ -1,7 +1,7 @@
 import functools
 
 import psycopg
-from flask import Blueprint
+from flask import Blueprint, current_app
 from flask import flash
 from flask import g
 from flask import redirect
@@ -10,11 +10,11 @@ from flask import request
 from flask import session
 from flask import url_for
 from werkzeug.security import check_password_hash
-from werkzeug.security import generate_password_hash
 
-from videobookmarks.db import get_db
+from videobookmarks.datamodel.datamodel import DataModel
+from videobookmarks.db import get_datamodel
 
-bp = Blueprint("auth", __name__, url_prefix="/auth")
+bp = Blueprint("authenticate", __name__, url_prefix="/authenticate")
 
 
 def login_required(view):
@@ -23,7 +23,7 @@ def login_required(view):
     @functools.wraps(view)
     def wrapped_view(**kwargs):
         if g.user is None:
-            return redirect(url_for("auth.login"))
+            return redirect(url_for("authenticate.login"))
 
         return view(**kwargs)
 
@@ -35,18 +35,17 @@ def load_logged_in_user():
     """If a user id is stored in the session, load the user object from
     the database into ``g.user``."""
     user_id = session.get("user_id")
-
     if user_id is None:
         g.user = None
     else:
-        g.user = (
-            get_db().execute("SELECT * FROM users WHERE id = %s", (user_id,)).fetchone()
-        )
+        datamodel = get_datamodel()
+        g.user = datamodel.get_user_with_id(user_id)
 
 
 @bp.route("/register", methods=("GET", "POST"))
 def register():
-    """Register a new user.
+    """
+    Register a new user.
 
     Validates that the username is not already taken. Hashes the
     password for security.
@@ -54,7 +53,7 @@ def register():
     if request.method == "POST":
         username = request.form["username"]
         password = request.form["password"]
-        db = get_db()
+        datamodel = get_datamodel()
         error = None
 
         if not username:
@@ -64,21 +63,15 @@ def register():
 
         if error is None:
             try:
-                db.execute(
-                    "INSERT INTO users (username, password) VALUES (%s, %s)",
-                    (username, generate_password_hash(password)),
-                )
-                db.commit()
+                datamodel.add_user(username, password)
             except psycopg.IntegrityError:
                 # The username was already taken, which caused the
                 # commit to fail. Show a validation error.
                 error = f"User {username} is already registered."
             else:
                 # Success, go to the login page.
-                return redirect(url_for("auth.login"))
-
+                return redirect(url_for("authenticate.login"))
         flash(error)
-
     return render_template("auth/register.html")
 
 
@@ -88,20 +81,18 @@ def login():
     if request.method == "POST":
         username = request.form["username"]
         password = request.form["password"]
-        db = get_db()
         error = None
-        user = db.execute(
-            "SELECT * FROM users WHERE username = %s", (username,)
-        ).fetchone()
+        datamodel = get_datamodel()
+        user = datamodel.get_user_with_name(username)
         if user is None:
             error = "Incorrect username."
-        elif not check_password_hash(user["password"], password):
+        elif not check_password_hash(user.password, password):
             error = "Incorrect password."
 
         if error is None:
             # store the user id in a new session and return to the index
             session.clear()
-            session["user_id"] = user["id"]
+            session["user_id"] = user.id
             return redirect(url_for("index"))
 
         flash(error)
