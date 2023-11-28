@@ -55,7 +55,9 @@ def register():
         password = request.form["password"]
         datamodel = get_datamodel()
         error = None
-
+        print('WE GOT HERE')
+        print('WE GOT HERE')
+        print('WE GOT HERE')
         if not username:
             error = "Username is required."
         elif not password:
