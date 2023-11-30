@@ -63,7 +63,6 @@ class AuthActions:
         return self._client.post(
             "/authenticate/register",
             data={"username": username, "password": password},
-            follow_redirects = True
         )
 
     def login(self, username="test", password="test"):
@@ -73,7 +72,7 @@ class AuthActions:
         )
 
     def logout(self):
-        return self._client.get("/auth/logout", follow_redirects=True)
+        return self._client.get("/authenticate/logout", follow_redirects=True)
 
 
 class CreateTagList:
@@ -82,9 +81,11 @@ class CreateTagList:
             datamodel = get_datamodel()
             suffix = suffix or ''
             self.username = "na" + suffix
-            self.user_id = datamodel.add_user(self.username, "na")
+            self.password = "na"
+            self.user_id = datamodel.add_user(self.username, self.password)
+            self.yt_video_id = "youtube link" + suffix
             self.video_id = datamodel.create_video_id(
-                "youtube link" + suffix,
+                self.yt_video_id,
                 "fakethumbnailurl.com",
                 "fake youtube title",
             )

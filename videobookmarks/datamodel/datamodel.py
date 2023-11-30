@@ -254,8 +254,6 @@ class PostgresDataModel(DataModel):
             " FROM tag_list tl JOIN users u ON tl.user_id = u.id"
             " ORDER BY created DESC"
         ).fetchall()
-        print(tag_lists)
-        print([TagList(**tl) for tl in tag_lists])
         return [TagList(**tl) for tl in tag_lists]
 
     def get_tag_list(self, tag_list_id: int) -> Optional[TagList]:
