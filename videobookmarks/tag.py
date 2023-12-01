@@ -172,6 +172,32 @@ def add_tag():
         return {"id": tag_id}
 
 
+@bp.route("/delete_tag_list", methods=("POST",))
+@login_required
+def delete_tag_list():
+    """Add a new tag to a video"""
+    tag_list_id = request.json["tag_list_id"]
+    user_id = g.user.id
+    error = None
+
+    if not tag_list_id:
+        error = "Tag list id is required."
+
+    datamodel = get_datamodel()
+    tag_list = datamodel.get_tag_list(tag_list_id)
+    if not tag_list:
+        error = "No tag list with that id found"
+    if user_id != tag_list.user_id:
+        # cannot delete a tag list you do not own
+        abort(403)
+
+    if error is not None:
+        abort(422)
+    else:
+        deleted_tag_list_id = datamodel.delete_tag_list(tag_list_id)
+        return {"id": deleted_tag_list_id}
+
+
 @bp.route("/tagging/<int:tag_list_id>/<string:yt_video_id>", methods=("GET", "POST"))
 def tagging(tag_list_id, yt_video_id):
     """Add a new tag to a video"""

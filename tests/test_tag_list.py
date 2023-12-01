@@ -17,9 +17,11 @@ def test_index_logged_out(app, client, auth):
     assert 'Log In' in response.data.decode()
     assert 'Register' in response.data.decode()
 
+
 def test_create_tag_list_login_required(app, client, auth):
     response = client.get('/create')
     assert response.status_code == 302
+
 
 def test_create_tag_list_load_page(app, client, auth):
     auth.register()
@@ -32,6 +34,7 @@ def test_create_tag_list_load_page(app, client, auth):
     assert 'input name="name" id="name" value="" required' in response.data.decode()
     assert 'textarea name="description" id="description"' in response.data.decode()
 
+
 def test_view_tag_list(app, client, auth):
     artifacts = CreateTagList(app)
     auth.login(artifacts.username, artifacts.password)
@@ -41,11 +44,13 @@ def test_view_tag_list(app, client, auth):
     assert 'input name="yt_video_id" id="yt_video_id"' in response.data.decode()
     assert f'<h1>Viewing {artifacts.tag_list_name}</h1>' in response.data.decode()
 
+
 def test_view_tag_list_not_found(app, client, auth):
     auth.register()
     auth.login()
     response = client.get('/99/view')
     assert response.status_code == 404
+
 
 def test_view_tag_list_video_url_post(app, client, auth):
     artifacts = CreateTagList(app)
@@ -54,12 +59,14 @@ def test_view_tag_list_video_url_post(app, client, auth):
     assert 'Redirecting'in response.data.decode()
     assert f'href="/tagging/{artifacts.tag_list_id}/{artifacts.yt_video_id}"'in response.data.decode()
 
+
 def test_view_tag_list_video_url_post_no_video_url(app, client, auth):
     artifacts = CreateTagList(app)
     auth.login(artifacts.username, artifacts.password)
     response = client.post(f'/{artifacts.tag_list_id}/view', data={'yt_video_id': ''})
     assert ' <div class="flash">Youtube Video ID is required.' in response.data.decode()
     assert f'Viewing {artifacts.tag_list_name} 'in response.data.decode()
+
 
 def test_create_tag_list_post(app, client, auth):
     auth.register()
@@ -72,6 +79,7 @@ def test_create_tag_list_post(app, client, auth):
             "SELECT description FROM tag_list WHERE name='test_3'"
         ).fetchone()['description']
         assert description == "another one"
+
 
 def test_create_tag_list_post_no_name(app, client, auth):
     auth.register()
@@ -86,6 +94,7 @@ def test_create_tag_list_post_no_name(app, client, auth):
         names = [row["name"] for row in tag_lists]
         assert "" not in names
 
+
 def test_video_tagging(app, client, auth):
     artifacts = CreateTagList(app)
     auth.login(artifacts.username, artifacts.password)
@@ -95,6 +104,7 @@ def test_video_tagging(app, client, auth):
     assert f"<data id=\"yt-video-id\" value=\"{artifacts.yt_video_id}\"></data>" in response.data.decode()
     assert 'input type="text" name="tag" id="tag-input"' in response.data.decode()
     assert 'input type="text" name="tag" id="tag-input"' in response.data.decode()
+
 
 def test_video_tagging_new_video(app, client, auth):
     artifacts = CreateTagList(app)
@@ -111,6 +121,7 @@ def test_video_tagging_new_video(app, client, auth):
             (artifacts.yt_video_id,)
         ).fetchone()['id']
         assert id_ == artifacts.video_id
+
 
 def test_video_tag_list(app, client, auth):
     artifacts = CreateTagList(app)
@@ -136,6 +147,7 @@ def test_video_tag_list(app, client, auth):
     # check that ordering is ascending
     sorted_list = sorted(response.json, key=lambda x: x["youtube_timestamp"])
     assert sorted_list == response.json
+
 
 def test_create_tag_on_existing_video(app, client, auth):
     artifacts = CreateTagList(app)
@@ -165,6 +177,7 @@ def test_create_tag_on_existing_video(app, client, auth):
 
 # TODO: Not sure why this gives an error but the functionality does work
 @unittest.skip
+
 def test_create_tag_without_valid_tag(app, client, auth):
     auth.register()
     auth.login()
@@ -183,6 +196,7 @@ def test_create_tag_without_valid_tag(app, client, auth):
         tag_lists = dm._connection.execute("SELECT * FROM tag").fetchall()
         tags = [row["tag"] for row in tag_lists]
         assert "" not in tags
+
 
 def test_create_tag_on_existing_video_new_video(app, client, auth):
     artifacts = CreateTagList(app)
@@ -235,3 +249,45 @@ def test_create_tag_on_existing_video_new_video(app, client, auth):
         # this video id should be 3 indicating that it added a new video link
         assert tag_row["video_id"] == new_video_id
         assert tag_row["tag_list_id"] == artifacts.tag_list_id
+
+
+def test_delete_tag_list(app, client, auth):
+    artifacts = CreateTagList(app)
+    auth.login(artifacts.username, artifacts.password)
+    client.post("/delete_tag_list", json={"tag_list_id": artifacts.tag_list_id})
+    with app.app_context():
+        dm = get_datamodel()
+        tag_lists = dm.get_tag_lists()
+        tag_list_ids = [tl.id for tl in tag_lists]
+        assert artifacts.tag_list_id not in tag_list_ids
+        assert dm.get_tag_list(artifacts.tag_list_id) == None
+        assert dm.get_deleted_tag_list(artifacts.tag_list_id) == artifacts.expected_tag_list
+
+
+def test_delete_tag_list_logged_out(app, client, auth):
+    artifacts = CreateTagList(app)
+    response = client.post("/delete_tag_list", json={"tag_list_id": artifacts.tag_list_id})
+    assert response.status_code == 302
+    assert response.location == '/authenticate/login'
+    with app.app_context():
+        dm = get_datamodel()
+        tag_lists = dm.get_tag_lists()
+        tag_list_ids = [tl.id for tl in tag_lists]
+        assert artifacts.tag_list_id in tag_list_ids
+        assert dm.get_tag_list(artifacts.tag_list_id) == artifacts.expected_tag_list
+        assert dm.get_deleted_tag_list(artifacts.tag_list_id) == None
+
+
+def test_delete_tag_list_different_user(app, client, auth):
+    artifacts = CreateTagList(app)
+    auth.register()
+    auth.login()
+    response = client.post("/delete_tag_list", json={"tag_list_id": artifacts.tag_list_id})
+    assert response.status_code == 403
+    with app.app_context():
+        dm = get_datamodel()
+        tag_lists = dm.get_tag_lists()
+        tag_list_ids = [tl.id for tl in tag_lists]
+        assert artifacts.tag_list_id in tag_list_ids
+        assert dm.get_tag_list(artifacts.tag_list_id) == artifacts.expected_tag_list
+        assert dm.get_deleted_tag_list(artifacts.tag_list_id) == None

@@ -450,14 +450,14 @@ class PostgresDataModel(DataModel):
         self._connection.commit()
         return new_deleted_id_row["id"]
 
-    def get_deleted_tag_list(self, tag_list_id):
+    def get_deleted_tag_list(self, old_tag_list_id):
         tag_list = (
             self._connection.execute(
                 "SELECT old_id as id, name, description, username, user_id, old_created as created"
                 " FROM deleted_tag_list dtl"
                 " JOIN users u ON dtl.user_id = u.id"
                 " WHERE dtl.old_id = %s",
-                (tag_list_id,),
+                (old_tag_list_id,),
             )
             .fetchone()
         )
