@@ -254,7 +254,7 @@ def test_create_tag_on_existing_video_new_video(app, client, auth):
 def test_delete_tag_list(app, client, auth):
     artifacts = CreateTagList(app)
     auth.login(artifacts.username, artifacts.password)
-    client.post("/delete_tag_list", json={"tag_list_id": artifacts.tag_list_id})
+    client.post(f"/delete_tag_list/{artifacts.tag_list_id}")
     with app.app_context():
         dm = get_datamodel()
         tag_lists = dm.get_tag_lists()
@@ -266,7 +266,7 @@ def test_delete_tag_list(app, client, auth):
 
 def test_delete_tag_list_logged_out(app, client, auth):
     artifacts = CreateTagList(app)
-    response = client.post("/delete_tag_list", json={"tag_list_id": artifacts.tag_list_id})
+    response = client.post(f"/delete_tag_list/{artifacts.tag_list_id}")
     assert response.status_code == 302
     assert response.location == '/authenticate/login'
     with app.app_context():
@@ -282,7 +282,7 @@ def test_delete_tag_list_different_user(app, client, auth):
     artifacts = CreateTagList(app)
     auth.register()
     auth.login()
-    response = client.post("/delete_tag_list", json={"tag_list_id": artifacts.tag_list_id})
+    response = client.post(f"/delete_tag_list/{artifacts.tag_list_id}")
     assert response.status_code == 403
     with app.app_context():
         dm = get_datamodel()

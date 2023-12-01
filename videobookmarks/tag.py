@@ -68,7 +68,7 @@ def index():
     datamodel = get_datamodel()
     return render_template(
         "tag_list/index.html",
-        tag_lists=datamodel.get_tag_lists()
+        tag_lists=datamodel.get_tag_lists(),
     )
 
 
@@ -172,11 +172,10 @@ def add_tag():
         return {"id": tag_id}
 
 
-@bp.route("/delete_tag_list", methods=("POST",))
+@bp.route("/delete_tag_list/<int:tag_list_id>", methods=("POST",))
 @login_required
-def delete_tag_list():
+def delete_tag_list(tag_list_id):
     """Add a new tag to a video"""
-    tag_list_id = request.json["tag_list_id"]
     user_id = g.user.id
     error = None
 
@@ -195,7 +194,7 @@ def delete_tag_list():
         abort(422)
     else:
         deleted_tag_list_id = datamodel.delete_tag_list(tag_list_id)
-        return {"id": deleted_tag_list_id}
+        return redirect(url_for("tag.index"))
 
 
 @bp.route("/tagging/<int:tag_list_id>/<string:yt_video_id>", methods=("GET", "POST"))
