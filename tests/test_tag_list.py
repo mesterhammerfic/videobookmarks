@@ -41,7 +41,7 @@ def test_view_tag_list(app, client, auth):
     response = client.get(f'/{artifacts.tag_list_id}/view')
     assert response.status_code == 200
     assert 'href="/authenticate/logout"' in response.data.decode()
-    assert 'input name="yt_video_id" id="yt_video_id"' in response.data.decode()
+    assert 'input name="new_video_link" id="new_video_link"' in response.data.decode()
     assert f'<h1>Viewing {artifacts.tag_list_name}</h1>' in response.data.decode()
 
 
@@ -55,7 +55,7 @@ def test_view_tag_list_not_found(app, client, auth):
 def test_view_tag_list_video_url_post(app, client, auth):
     artifacts = CreateTagList(app)
     auth.login(artifacts.username, artifacts.password)
-    response = client.post(f'/{artifacts.tag_list_id}/view', data={'yt_video_id': artifacts.yt_video_id})
+    response = client.post(f'/{artifacts.tag_list_id}/view', data={'new_video_id': artifacts.yt_video_id})
     assert 'Redirecting'in response.data.decode()
     assert f'href="/tagging/{artifacts.tag_list_id}/{artifacts.yt_video_id}"'in response.data.decode()
 
@@ -63,7 +63,7 @@ def test_view_tag_list_video_url_post(app, client, auth):
 def test_view_tag_list_video_url_post_no_video_url(app, client, auth):
     artifacts = CreateTagList(app)
     auth.login(artifacts.username, artifacts.password)
-    response = client.post(f'/{artifacts.tag_list_id}/view', data={'yt_video_id': ''})
+    response = client.post(f'/{artifacts.tag_list_id}/view', data={'new_video_id': ''})
     assert ' <div class="flash">Youtube Video ID is required.' in response.data.decode()
     assert f'Viewing {artifacts.tag_list_name} 'in response.data.decode()
 
