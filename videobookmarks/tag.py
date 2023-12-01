@@ -22,8 +22,15 @@ YT_API_KEY = os.getenv("YT_API_KEY")
 if not YT_API_KEY:
     raise ValueError("YT_API_KEY not set")
 
+TEST_NEW_VIDEO_LINK = 'test_new_video_link'
+
 
 def get_video_details(video_id):
+    if video_id == TEST_NEW_VIDEO_LINK:
+        return {
+            "title": "test_title",
+            "thumbnail_url": "test_thumbnail.url"
+        }
     base_url = "https://www.googleapis.com/youtube/v3/videos"
     params = {
         "part": "snippet",
@@ -61,7 +68,7 @@ def index():
     datamodel = get_datamodel()
     return render_template(
         "tag_list/index.html",
-        tag_lists=datamodel.get_tag_lists()
+        tag_lists=datamodel.get_tag_lists(),
     )
 
 
@@ -163,6 +170,31 @@ def add_tag():
         )
         # TODO: why does this need to return a json? js keeps throwing an error otherwise
         return {"id": tag_id}
+
+
+@bp.route("/delete_tag_list/<int:tag_list_id>", methods=("POST",))
+@login_required
+def delete_tag_list(tag_list_id):
+    """Add a new tag to a video"""
+    user_id = g.user.id
+    error = None
+
+    if not tag_list_id:
+        error = "Tag list id is required."
+
+    datamodel = get_datamodel()
+    tag_list = datamodel.get_tag_list(tag_list_id)
+    if not tag_list:
+        error = "No tag list with that id found"
+    if user_id != tag_list.user_id:
+        # cannot delete a tag list you do not own
+        abort(403)
+
+    if error is not None:
+        abort(422)
+    else:
+        deleted_tag_list_id = datamodel.delete_tag_list(tag_list_id)
+        return redirect(url_for("tag.index"))
 
 
 @bp.route("/tagging/<int:tag_list_id>/<string:yt_video_id>", methods=("GET", "POST"))

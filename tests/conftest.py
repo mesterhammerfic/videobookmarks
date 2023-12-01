@@ -59,13 +59,20 @@ class AuthActions:
     def __init__(self, client):
         self._client = client
 
+    def register(self, username="test", password="test"):
+        return self._client.post(
+            "/authenticate/register",
+            data={"username": username, "password": password},
+        )
+
     def login(self, username="test", password="test"):
         return self._client.post(
-            "/auth/login", data={"username": username, "password": password}
+            "/authenticate/login",
+            data={"username": username, "password": password},
         )
 
     def logout(self):
-        return self._client.get("/auth/logout")
+        return self._client.get("/authenticate/logout", follow_redirects=True)
 
 
 class CreateTagList:
@@ -74,9 +81,11 @@ class CreateTagList:
             datamodel = get_datamodel()
             suffix = suffix or ''
             self.username = "na" + suffix
-            self.user_id = datamodel.add_user(self.username, "na")
+            self.password = "na"
+            self.user_id = datamodel.add_user(self.username, self.password)
+            self.yt_video_id = "youtube link" + suffix
             self.video_id = datamodel.create_video_id(
-                "youtube link" + suffix,
+                self.yt_video_id,
                 "fakethumbnailurl.com",
                 "fake youtube title",
             )
@@ -87,6 +96,7 @@ class CreateTagList:
                 self.tag_list_desc,
                 self.user_id,
             )
+            self.created = datamodel.get_tag_list(self.tag_list_id).created
 
     @property
     def expected_tag_list(self):
@@ -96,6 +106,7 @@ class CreateTagList:
             description=self.tag_list_desc,
             username=self.username,
             user_id=self.user_id,
+            created=self.created,
         )
 
 @pytest.fixture

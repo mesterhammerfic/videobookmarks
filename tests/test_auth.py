@@ -69,9 +69,9 @@ class TestMyAPI(unittest.TestCase):
 
     def test_register(self):
         response = self.client.post(
-            '/auth/register', data={'username': 'a', 'password': 'a'}
+            '/authenticate/register', data={'username': 'a', 'password': 'a'}
         )
-        self.assertEqual(response.headers["Location"],"/auth/login")
+        self.assertEqual(response.headers["Location"],"/authenticate/login")
 
         with self.app.app_context():
             user = get_db().execute(

@@ -41,6 +41,8 @@ def create_app(test_config=None):
     def before_request():
         if app.debug:
             return
+        if test_config:
+            return
         if request.is_secure:
             return
 

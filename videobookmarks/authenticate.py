@@ -55,7 +55,6 @@ def register():
         password = request.form["password"]
         datamodel = get_datamodel()
         error = None
-
         if not username:
             error = "Username is required."
         elif not password:
@@ -72,7 +71,7 @@ def register():
                 # Success, go to the login page.
                 return redirect(url_for("authenticate.login"))
         flash(error)
-    return render_template("auth/register.html")
+    return render_template("authenticate/register.html")
 
 
 @bp.route("/login", methods=("GET", "POST"))
@@ -97,7 +96,7 @@ def login():
 
         flash(error)
 
-    return render_template("auth/login.html")
+    return render_template("authenticate/login.html")
 
 
 @bp.route("/logout")

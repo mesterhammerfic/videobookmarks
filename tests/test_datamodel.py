@@ -444,3 +444,15 @@ def test_load_video_id_no_id_found(app):
         fake_video_link = "nonexistant_link"
         actual_video_id = datamodel.load_video_id(fake_video_link)
         assert actual_video_id == None
+
+
+def test_delete_tag_list(app):
+    with app.app_context():
+        artifacts = CreateTagList(app)
+        tag_list_id = artifacts.tag_list_id
+        datamodel = get_datamodel()
+        datamodel.delete_tag_list(tag_list_id)
+        check_existing_tag_lists = datamodel.get_tag_list(tag_list_id)
+        check_delete_tag_lists = datamodel.get_deleted_tag_list(tag_list_id)
+        assert check_existing_tag_lists == None
+        assert check_delete_tag_lists == artifacts.expected_tag_list
