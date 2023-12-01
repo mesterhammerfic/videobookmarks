@@ -1,6 +1,7 @@
 // Arrays to store selected tags and videos
 const selectedTags = [];
 const selectedVideos = [];
+const tagListId = document.getElementById("tag-list-id").value;
 
 // Function to fetch data from an endpoint with JSON body
 async function fetchData(endpoint, body) {
@@ -17,7 +18,6 @@ async function fetchData(endpoint, body) {
 
 // Function to update the lists based on selected filters
 async function updateLists() {
-    const tagListId = document.getElementById("tag-list-id").value;
     const tagParams = { videoLinks: selectedVideos };
     const videoParams = { tags: selectedTags };
 
@@ -118,6 +118,19 @@ async function updateLists() {
         list2Content.appendChild(videoButton);
     });
 }
+
+function youtube_parser(url){
+    var regExp = /.*(?:youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=)([^#\&\?]*).*/;
+    var match = url.match(regExp);
+    return match&&match[1];
+}
+
+const tagVideoForm = document.getElementById("new_video_tagging");
+tagVideoForm.addEventListener("submit", () => {
+    const newVideoLink = document.getElementById("new_video_link").value;
+    const videoIdInput = document.getElementById("new_video_id");
+    videoIdInput.value = youtube_parser(newVideoLink);
+});
 
 // Initial load with no filters
 updateLists();

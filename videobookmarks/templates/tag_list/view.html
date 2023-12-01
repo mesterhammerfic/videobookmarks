@@ -19,8 +19,9 @@
         <div class="list" id="list2">
             <div class="list-header">
                 <h1>Videos</h1>
-                <form method="post" class="link-input">
-                <input name="yt_video_id" id="yt_video_id" placeholder="New Youtube Video ID" required>
+                <form id="new_video_tagging" method="post" class="link-input">
+                <input name="new_video_link" id="new_video_link" placeholder="New Youtube Video Link" required>
+                <input name="new_video_id" id="new_video_id" hidden>
                 <input type="submit" value="Tag Video" class="button">
                 </form>
             </div>

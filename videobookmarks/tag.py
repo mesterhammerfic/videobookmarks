@@ -221,7 +221,7 @@ def view_tag_list(tag_list_id):
     if tag_list is None:
         abort(404, f"Tag list id {id} doesn't exist.")
     if request.method == "POST":
-        yt_video_id = request.form["yt_video_id"]
+        yt_video_id = request.form["new_video_id"]
         error = None
 
         if not yt_video_id:
