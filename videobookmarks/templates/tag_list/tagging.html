@@ -22,15 +22,20 @@
             referrerpolicy="no-referrer"
     >
     </iframe>
+
     <form class="link-input">
-        <input type="text" name="tag" id="tag-input"
-               required
-               placeholder="Add tag"
-               oninvalid="must give tag a name"
-               list="tagSuggestions"
-        >
+        {% if g.user %}
+            <input type="text" name="tag" id="tag-input"
+                   required
+                   placeholder="Add tag"
+                   oninvalid="must give tag a name"
+                   list="tagSuggestions"
+            >
+            <button id="add-tag-button" class="button">Add Tag</button>
+        {% else %}
+            <p><a class="button" href="{{ url_for('authenticate.login') }}">Log In</a> to stark tagging</p>
+        {% endif %}
         <datalist id="tagSuggestions"></datalist>
-        <button id="add-tag-button" class="button">Add Tag</button>
     </form>
     <table id="tag-list">
       <tbody>

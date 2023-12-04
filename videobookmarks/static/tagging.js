@@ -56,38 +56,39 @@ async function refreshSuggestions(tagListId) {
 // handle buttons and form for adding tag
 const tagInput = document.getElementById('tag-input');
 const addTagButton = document.getElementById('add-tag-button');
+if (addTagButton) {
+    addTagButton.addEventListener('click', (event) => {
+        event.preventDefault()
+        const tagName = tagInput.value;
+        const currentTime = player.getCurrentTime();
 
-addTagButton.addEventListener('click', (event) => {
-    event.preventDefault()
-    const tagName = tagInput.value;
-    const currentTime = player.getCurrentTime();
+        // Create a new tag on the server using AJAX
+        const url = '/add_tag';
 
-    // Create a new tag on the server using AJAX
-    const url = '/add_tag';
-
-    fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          yt_video_id: youtubeVideoID,
-          tag_list_id: tagListID,
-          tag: tagName,
-          timestamp: currentTime
+        fetch(url, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              yt_video_id: youtubeVideoID,
+              tag_list_id: tagListID,
+              tag: tagName,
+              timestamp: currentTime
+            })
         })
-    })
-    .then(response => response.json())
-    .then(() => {
-      // After adding the tag, refresh the tag list
-      refreshTagList(videoID, tagListID);
-      refreshSuggestions(tagListID)
-      tagInput.value = '';
-    })
-    .catch(error => {
-      console.error('Error adding tag:', error);
+        .then(response => response.json())
+        .then(() => {
+          // After adding the tag, refresh the tag list
+          refreshTagList(videoID, tagListID);
+          refreshSuggestions(tagListID)
+          tagInput.value = '';
+        })
+        .catch(error => {
+          console.error('Error adding tag:', error);
+        });
     });
-});
+};
 
 // create seek to function so that users can click on a timestamp
 function jumptoTime(timepoint) {
