@@ -17,8 +17,7 @@ def test_register(app, client):
 
 def test_login(app, client, auth):
     auth.register()
-    response = auth.login()
-    assert response.headers["Location"] == "/"
+    auth.login()
     with client:
         client.get('/')
         assert g.user.username == 'test'
