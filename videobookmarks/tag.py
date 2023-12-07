@@ -172,7 +172,7 @@ def add_tag():
         return {"id": tag_id}
 
 
-@bp.route("/delete_tag_list/<int:tag_list_id>", methods=("POST",))
+@bp.route("/delete_tag_list/<int:tag_list_id>", methods=("DELETE",))
 @login_required
 def delete_tag_list(tag_list_id):
     """Add a new tag to a video"""
@@ -184,6 +184,7 @@ def delete_tag_list(tag_list_id):
 
     datamodel = get_datamodel()
     tag_list = datamodel.get_tag_list(tag_list_id)
+    print(tag_list)
     if not tag_list:
         error = "No tag list with that id found"
     if user_id != tag_list.user_id:

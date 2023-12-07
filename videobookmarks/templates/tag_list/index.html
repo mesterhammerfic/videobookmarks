@@ -1,5 +1,4 @@
 {% extends 'base.html' %}
-
 {% block header %}
   <h1>{% block title %}Tag Lists{% endblock %}</h1>
   {% if g.user %}
@@ -18,13 +17,18 @@
             <p class="body">{{ tag_list['description'] }}</p>
             </div>
         {% if g.user.id == tag_list.user_id %}
-          <form action="{{ url_for('tag.delete_tag_list', tag_list_id=tag_list.id) }}" method=post class="delete-button">
-              <input type=submit class="button big" value="Delete"/>
-            </form>
+            <button
+                    class="button big delete"
+                    data-confirm="Are you sure?"
+                    value="{{ url_for('tag.delete_tag_list', tag_list_id=tag_list.id) }}"
+            >
+                Delete
+            </button>
         {% endif %}
         <a class="button big" href="{{ url_for('tag.view_tag_list', tag_list_id=tag_list.id) }}">Select</a>
     </article>
     {% if not loop.last %}
     {% endif %}
   {% endfor %}
+<script src="/static/index.js"></script>
 {% endblock %}
