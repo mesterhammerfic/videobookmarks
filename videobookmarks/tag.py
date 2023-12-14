@@ -196,7 +196,7 @@ def delete_tag_list(tag_list_id):
         return {"deleted_tag_list_id": deleted_tag_list_id}
 
 
-@bp.route("/tagging/<int:tag_list_id>/<string:yt_video_id>", methods=("GET", "POST"))
+@bp.route("/tagging/<int:tag_list_id>/<string:yt_video_id>", methods=("GET",))
 def tagging(tag_list_id, yt_video_id):
     """Add a new tag to a video"""
     datamodel = get_datamodel()
