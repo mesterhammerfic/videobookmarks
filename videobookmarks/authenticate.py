@@ -90,11 +90,15 @@ def login():
 
         if error is None:
             # store the user id in a new session and return to the index
+            referrer = session["login_referrer"]
             session.clear()
             session["user_id"] = user.id
-            redirect(request.referrer)
+            return redirect(referrer)
 
         flash(error)
+    elif request.method == "GET":
+        session["login_referrer"] = request.referrer
+        print(session["login_referrer"])
 
     return render_template("authenticate/login.html")
 
