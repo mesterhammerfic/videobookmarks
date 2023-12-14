@@ -149,6 +149,47 @@ def test_video_tag_list(app, client, auth):
     assert sorted_list == response.json
 
 
+def test_get_tags(app, client):
+    artifacts = CreateTagList(app)
+    with app.app_context():
+        dm = get_datamodel()
+        dm.add_tag(
+            'test',
+            1.0,
+            artifacts.tag_list_id,
+            artifacts.video_id,
+            artifacts.user_id,
+        )
+        dm.add_tag(
+            'test',
+            2.0,
+            artifacts.tag_list_id,
+            artifacts.video_id,
+            artifacts.user_id,
+        )
+    response = client.get(f"get_tags/{artifacts.tag_list_id}")
+    assert response.data == b'[{"count":2,"links":["youtube link"],"tag":"test"}]\n'
+
+
+def test_get_videos(app, client, auth):
+    artifacts = CreateTagList(app)
+    auth.login(artifacts.username, artifacts.password)
+    client.post(
+        '/add_tag',
+        json={
+            'tag': 'monkey',
+            'timestamp': 1.123,
+            'tag_list_id': artifacts.tag_list_id,
+            'yt_video_id': TEST_NEW_VIDEO_LINK,
+        }
+    )
+    response = client.get(f"get_videos/{artifacts.tag_list_id}")
+    assert response.data == (
+        b'[{"link":"test_new_video_link","num_tags":1,"tags":["monkey"],"thumbnail":"t'
+        b'est_thumbnail.url","title":"test_title"}]\n'
+    )
+
+
 def test_create_tag_on_existing_video(app, client, auth):
     artifacts = CreateTagList(app)
     auth.login(artifacts.username, artifacts.password)

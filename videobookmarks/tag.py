@@ -72,26 +72,24 @@ def index():
     )
 
 
-@bp.route("/get_tags/<int:tag_list_id>", methods=("POST",))
+@bp.route("/get_tags/<int:tag_list_id>", methods=("GET",))
 def get_tag_list_tags(tag_list_id) -> Sequence[GroupedTag]:
     """
     :param tag_list_id: id of tag_list to get
     :return: all the tags in that list
     """
-    yt_videos_ids = request.json["videoLinks"]
     datamodel = get_datamodel()
-    return datamodel.get_tag_list_tags(tag_list_id, yt_videos_ids)
+    return datamodel.get_tag_list_tags(tag_list_id)
 
 
-@bp.route("/get_videos/<int:tag_list_id>", methods=("POST",))
+@bp.route("/get_videos/<int:tag_list_id>", methods=("GET",))
 def get_tag_list_videos(tag_list_id) -> Sequence[GroupedVideo]:
     """
     :param tag_list_id: id of tag_list to get
     :return: all the videos in that list
     """
-    tags = request.json["tags"]
     datamodel = get_datamodel()
-    return datamodel.get_tag_list_videos(tag_list_id, tags)
+    return datamodel.get_tag_list_videos(tag_list_id)
 
 
 @bp.route("/video_tags/<int:video_id>/<int:tag_list_id>", methods=("GET",))
@@ -195,7 +193,7 @@ def delete_tag_list(tag_list_id):
         abort(422)
     else:
         deleted_tag_list_id = datamodel.delete_tag_list(tag_list_id)
-        return redirect(url_for("tag.index"))
+        return {"deleted_tag_list_id": deleted_tag_list_id}
 
 
 @bp.route("/tagging/<int:tag_list_id>/<string:yt_video_id>", methods=("GET", "POST"))

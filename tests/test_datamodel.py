@@ -167,13 +167,11 @@ def test_get_tag_list_tags(app):
                 tag='na_1',
                 count=2,
                 links=['youtube link_0', 'youtube link_1'],
-                show=True
             ),
             GroupedTag(
                 tag='na_2',
                 count=1,
                 links=['youtube link_1'],
-                show=True
             ),
         ]
         assert tags == expected_tags
@@ -211,19 +209,17 @@ def test_get_tag_list_tags_with_video_list(app):
             tag_list_artifacts_1.video_id,
             tag_list_artifacts_1.user_id,
         )
-        tags = datamodel.get_tag_list_tags(tag_list_artifacts_0.tag_list_id, ['youtube link_0'])
+        tags = datamodel.get_tag_list_tags(tag_list_artifacts_0.tag_list_id)
         expected_tags = [
             GroupedTag(
                 tag='na_1',
                 count=2,
                 links=['youtube link_0', 'youtube link_1'],
-                show=True
             ),
             GroupedTag(
                 tag='na_2',
                 count=1,
                 links=['youtube link_1'],
-                show=False
             ),
         ]
         assert tags == expected_tags
@@ -269,7 +265,6 @@ def test_get_tag_list_videos(app):
                 title='fake youtube title',
                 num_tags=2,
                 tags=['na_1', 'na_2'],
-                show=True,
             ),
             GroupedVideo(
                 link='youtube link_0',
@@ -277,7 +272,6 @@ def test_get_tag_list_videos(app):
                 title='fake youtube title',
                 num_tags=1,
                 tags=['na_1'],
-                show=True,
             )
         ]
         assert videos == expected_videos
@@ -315,7 +309,7 @@ def test_get_tag_list_videos_with_tags(app):
             tag_list_artifacts_1.video_id,
             tag_list_artifacts_1.user_id,
         )
-        videos = datamodel.get_tag_list_videos(tag_list_artifacts_0.tag_list_id, ["na_2"])
+        videos = datamodel.get_tag_list_videos(tag_list_artifacts_0.tag_list_id)
         expected_videos = [
             GroupedVideo(
                 link='youtube link_1',
@@ -323,7 +317,6 @@ def test_get_tag_list_videos_with_tags(app):
                 title='fake youtube title',
                 num_tags=2,
                 tags=['na_1', 'na_2'],
-                show=True,
             ),
             GroupedVideo(
                 link='youtube link_0',
@@ -331,7 +324,6 @@ def test_get_tag_list_videos_with_tags(app):
                 title='fake youtube title',
                 num_tags=1,
                 tags=['na_1'],
-                show=False,
             )
         ]
         assert videos == expected_videos

@@ -3,14 +3,14 @@ const selectedTags = [];
 const selectedVideos = [];
 const tagListId = document.getElementById("tag-list-id").value;
 
+function hasIntersection(arr1, arr2) {
+  return arr1.some(element => arr2.includes(element));
+}
+
 // Function to fetch data from an endpoint with JSON body
 async function fetchData(endpoint, body) {
     const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(body)
+        method: 'GET'
     });
     const data = await response.json();
     return data;
@@ -23,8 +23,8 @@ async function updateLists() {
 
     // Fetch filtered data for tags and videos
     const [tagsData, videosData] = await Promise.all([
-        fetchData(`/get_tags/${tagListId}`, tagParams),
-        fetchData(`/get_videos/${tagListId}`, videoParams)
+        fetchData(`/get_tags/${tagListId}`),
+        fetchData(`/get_videos/${tagListId}`)
     ]);
 
     const list1Content = document.getElementById("list1-content");
@@ -35,7 +35,13 @@ async function updateLists() {
         tagButton.label = tag.tag;
         tagButton.textContent = `${tag.tag} (${tag.count})`;
         tagButton.classList.add("button");
-        tagButton.disabled = !tag.show; // Disable button if show is false
+
+        // Check if the tag is in any of the selected videos
+        if (selectedVideos.length != 0) {
+            tagButton.disabled = !hasIntersection(selectedVideos, tag.links); // Disable button if show is false
+        } else {
+            tagButton.disabled = false
+        }
 
         // Check if the tag is in the selectedTags array
         if (selectedTags.includes(tag.tag)) {
@@ -65,8 +71,14 @@ async function updateLists() {
     videosData.forEach(video => {
         const videoButton = document.createElement("button");
         videoButton.classList.add("video-item");
-        videoButton.disabled = !video.show; // Disable button if show is false
         videoButton.label = video.link;
+
+        // Check if the video has in any of the selected tags
+        if (selectedTags.length != 0){
+            videoButton.disabled = !hasIntersection(selectedTags, video.tags); // Disable button if show is false
+        } else {
+            videoButton.disabled = false
+        }
 
         // Create a link to open the video when the thumbnail is clicked
         const videoLink = document.createElement("a");

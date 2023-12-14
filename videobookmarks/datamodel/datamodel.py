@@ -47,7 +47,6 @@ class GroupedTag:
     tag: str
     count: int
     links: Sequence[str]
-    show: bool
 
 @dataclasses.dataclass(frozen=True)
 class GroupedVideo:
@@ -69,7 +68,6 @@ class GroupedVideo:
     title: str
     num_tags: int
     tags: Sequence[str]
-    show: bool
 
 
 class DataModel(abc.ABC):
@@ -119,7 +117,6 @@ class DataModel(abc.ABC):
     def get_tag_list_tags(
             self,
             tag_list_id: int,
-            yt_video_ids: Optional[Sequence[str]],
     ) -> Sequence[GroupedTag]:
         """
         Get all the tags for a given tag list id
@@ -128,8 +125,8 @@ class DataModel(abc.ABC):
 
     @abc.abstractmethod
     def get_tag_list_videos(
-            self, tag_list_id: int,
-            tags: Sequence[str],
+            self,
+            tag_list_id: int,
     ) -> Sequence[GroupedVideo]:
         """
         get all videos for a given tag list id
@@ -275,29 +272,16 @@ class PostgresDataModel(DataModel):
     def get_tag_list_tags(
             self,
             tag_list_id: int,
-            yt_video_ids: Optional[Sequence[str]]=None,
     ) -> Sequence[GroupedTag]:
-        if yt_video_ids:
-            statement = (
-                "SELECT tag, COUNT(*) as count, ARRAY_AGG(DISTINCT v.link) as links,"
-                " ARRAY_AGG(DISTINCT v.link) && %s AS show"
-                " FROM tag t"
-                " JOIN video v on t.video_id = v.id"
-                " WHERE tag_list_id = %s"
-                " GROUP BY tag"
-                " ORDER BY ARRAY_AGG(DISTINCT v.link) && %s DESC, tag ASC"
-            )
-            arguments = (yt_video_ids, tag_list_id, yt_video_ids)
-        else:
-            statement = (
-                "SELECT tag, COUNT(*) as count, ARRAY_AGG(DISTINCT v.link) as links, true AS show"
-                " FROM tag t"
-                " JOIN video v on t.video_id = v.id"
-                " WHERE tag_list_id = %s"
-                " GROUP BY tag"
-                " ORDER BY tag ASC"
-            )
-            arguments = (tag_list_id,)
+        statement = (
+            "SELECT tag, COUNT(*) as count, ARRAY_AGG(DISTINCT v.link) as links"
+            " FROM tag t"
+            " JOIN video v on t.video_id = v.id"
+            " WHERE tag_list_id = %s"
+            " GROUP BY tag"
+            " ORDER BY tag ASC"
+        )
+        arguments = (tag_list_id,)
 
         tag_list_tags = (
             self._connection.execute(
@@ -310,35 +294,20 @@ class PostgresDataModel(DataModel):
         return [GroupedTag(**tag) for tag in tag_list_tags]
 
     def get_tag_list_videos(
-            self, tag_list_id: int,
-            tags: Optional[Sequence[str]]=None,
+            self,
+            tag_list_id: int,
     ) -> Sequence[GroupedVideo]:
-        if tags:
-            statement = (
-                "SELECT link, thumbnail, title,"
-                " COUNT(*) as num_tags,"
-                " ARRAY_AGG(DISTINCT tag) as tags,"
-                " ARRAY_AGG(DISTINCT tag) && %s AS show"
-                " FROM video v"
-                " JOIN tag t ON t.video_id = v.id"
-                " WHERE t.tag_list_id = %s"
-                " GROUP BY link, thumbnail, title"
-                " ORDER BY ARRAY_AGG(DISTINCT tag) && %s DESC, count(*) DESC"
-            )
-            arguments = (tags, tag_list_id, tags)
-        else:
-            statement = (
-                "SELECT link, thumbnail, title,"
-                " COUNT(*) as num_tags,"
-                " ARRAY_AGG(DISTINCT tag) as tags,"
-                " true AS show"
-                " FROM video v"
-                " JOIN tag t ON t.video_id = v.id"
-                " WHERE t.tag_list_id = %s"
-                " GROUP BY link, thumbnail, title"
-                " ORDER BY count(*) DESC"
-            )
-            arguments = (tag_list_id,)
+        statement = (
+            "SELECT link, thumbnail, title,"
+            " COUNT(*) as num_tags,"
+            " ARRAY_AGG(DISTINCT tag) as tags"
+            " FROM video v"
+            " JOIN tag t ON t.video_id = v.id"
+            " WHERE t.tag_list_id = %s"
+            " GROUP BY link, thumbnail, title"
+            " ORDER BY count(*) DESC"
+        )
+        arguments = (tag_list_id,)
 
         tag_list_videos = (
             self._connection.execute(

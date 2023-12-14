@@ -29,11 +29,11 @@ function onPlayerReady(event) {
 // Function to fetch data from an endpoint with JSON body
 async function fetchData(endpoint) {
     const response = await fetch(endpoint, {
-        method: 'POST',
+        method: 'GET',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ videoLinks: [] })
+        data: {}
     });
     const data = await response.json();
     return data;
