@@ -90,10 +90,13 @@ def login():
 
         if error is None:
             # store the user id in a new session and return to the index
-            referrer = session["login_referrer"]
+            destination = session.get(
+                "login_referrer",
+                url_for("authenticate.login"),
+            )
             session.clear()
             session["user_id"] = user.id
-            return redirect(referrer)
+            return redirect(destination)
 
         flash(error)
     elif request.method == "GET":

@@ -107,6 +107,7 @@ class CreateTagList:
             username=self.username,
             user_id=self.user_id,
             created=self.created,
+            deleted=False,
         )
 
 @pytest.fixture

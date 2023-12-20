@@ -301,8 +301,8 @@ def test_delete_tag_list(app, client, auth):
         tag_lists = dm.get_tag_lists()
         tag_list_ids = [tl.id for tl in tag_lists]
         assert artifacts.tag_list_id not in tag_list_ids
-        assert dm.get_tag_list(artifacts.tag_list_id) == None
-        assert dm.get_deleted_tag_list(artifacts.tag_list_id) == artifacts.expected_tag_list
+        tag_list = dm.get_tag_list(artifacts.tag_list_id)
+        assert tag_list.deleted is True
 
 
 def test_delete_tag_list_logged_out(app, client, auth):
@@ -315,8 +315,8 @@ def test_delete_tag_list_logged_out(app, client, auth):
         tag_lists = dm.get_tag_lists()
         tag_list_ids = [tl.id for tl in tag_lists]
         assert artifacts.tag_list_id in tag_list_ids
-        assert dm.get_tag_list(artifacts.tag_list_id) == artifacts.expected_tag_list
-        assert dm.get_deleted_tag_list(artifacts.tag_list_id) == None
+        tag_list = dm.get_tag_list(artifacts.tag_list_id)
+        assert tag_list.deleted is False
 
 
 def test_delete_tag_list_different_user(app, client, auth):
@@ -330,5 +330,5 @@ def test_delete_tag_list_different_user(app, client, auth):
         tag_lists = dm.get_tag_lists()
         tag_list_ids = [tl.id for tl in tag_lists]
         assert artifacts.tag_list_id in tag_list_ids
-        assert dm.get_tag_list(artifacts.tag_list_id) == artifacts.expected_tag_list
-        assert dm.get_deleted_tag_list(artifacts.tag_list_id) == None
+        tag_list = dm.get_tag_list(artifacts.tag_list_id)
+        assert tag_list.deleted is False
