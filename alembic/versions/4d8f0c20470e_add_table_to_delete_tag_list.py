@@ -40,4 +40,3 @@ def downgrade() -> None:
             DROP TABLE deleted_tag_list;
         """
     )
-

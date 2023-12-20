@@ -192,8 +192,11 @@ def delete_tag_list(tag_list_id):
     if error is not None:
         abort(422)
     else:
-        deleted_tag_list_id = datamodel.delete_tag_list(tag_list_id)
-        return {"deleted_tag_list_id": deleted_tag_list_id}
+        try:
+            deleted_tag_list_id = datamodel.delete_tag_list(tag_list_id)
+            return {"deleted tag_list id": deleted_tag_list_id}
+        except KeyError:
+            abort(404)
 
 
 @bp.route("/tagging/<int:tag_list_id>/<string:yt_video_id>", methods=("GET",))

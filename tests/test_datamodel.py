@@ -444,7 +444,7 @@ def test_delete_tag_list(app):
         tag_list_id = artifacts.tag_list_id
         datamodel = get_datamodel()
         datamodel.delete_tag_list(tag_list_id)
-        check_existing_tag_lists = datamodel.get_tag_list(tag_list_id)
-        check_delete_tag_lists = datamodel.get_deleted_tag_list(tag_list_id)
-        assert check_existing_tag_lists == None
-        assert check_delete_tag_lists == artifacts.expected_tag_list
+        tl = datamodel.get_tag_list(tag_list_id)
+        tag_list_ids = [t.id for t in datamodel.get_tag_lists()]
+        assert tl.deleted is True
+        assert tl.id not in tag_list_ids

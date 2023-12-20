@@ -21,6 +21,7 @@ class TagList:
     username: str
     user_id: int
     created: int
+    deleted: bool
 
 @dataclasses.dataclass(frozen=True)
 class Tag:
@@ -102,7 +103,7 @@ class DataModel(abc.ABC):
     @abc.abstractmethod
     def get_tag_lists(self) -> List[TagList]:
         """
-        Get all tag_lists.
+        Get all tag_lists where the deleted column is set to false.
         """
         ...
 
@@ -192,10 +193,6 @@ class DataModel(abc.ABC):
     def delete_tag_list(self, tag_list_id):
         ...
 
-    @abc.abstractmethod
-    def get_deleted_tag_list(self, tag_list_id):
-        ...
-
 
 class PostgresDataModel(DataModel):
     """
@@ -247,8 +244,9 @@ class PostgresDataModel(DataModel):
 
     def get_tag_lists(self) -> List[TagList]:
         tag_lists = self._connection.execute(
-            "SELECT tl.id, name, description, user_id, username, created"
+            "SELECT tl.id, name, description, user_id, username, created, deleted"
             " FROM tag_list tl JOIN users u ON tl.user_id = u.id"
+            " WHERE deleted = false"
             " ORDER BY created DESC"
         ).fetchall()
         return [TagList(**tl) for tl in tag_lists]
@@ -256,7 +254,7 @@ class PostgresDataModel(DataModel):
     def get_tag_list(self, tag_list_id: int) -> Optional[TagList]:
         tag_list = (
             self._connection.execute(
-                "SELECT tl.id, name, description, username, user_id, created"
+                "SELECT tl.id, name, description, username, user_id, created, deleted"
                 " FROM tag_list tl"
                 " JOIN users u ON tl.user_id = u.id"
                 " WHERE tl.id = %s",
@@ -398,39 +396,18 @@ class PostgresDataModel(DataModel):
         self._connection.commit()
         return tag_id_row["id"]
 
-    def delete_tag_list(self, tag_list_id):
-        tag_list = self.get_tag_list(tag_list_id)
-        new_deleted_id_row = self._connection.execute(
-            (
-                "INSERT INTO deleted_tag_list (old_id, name, description, user_id, old_created)"
-                " VALUES (%s, %s, %s, %s, %s)"
-                " RETURNING id"
-            ),
-            (tag_list.id, tag_list.name, tag_list.description, tag_list.user_id, tag_list.created),
-        ).fetchone()
-        self._connection.commit()
-        self._connection.execute(
-            (
-                "DELETE FROM tag_list"
-                " WHERE id = %s"
-            ),
-            (tag_list.id,),
-        )
-        self._connection.commit()
-        return new_deleted_id_row["id"]
-
-    def get_deleted_tag_list(self, old_tag_list_id):
-        tag_list = (
+    def delete_tag_list(self, tag_list_id: int) -> Optional[int]:
+        tl = self.get_tag_list(tag_list_id)
+        if not tl.deleted:
             self._connection.execute(
-                "SELECT old_id as id, name, description, username, user_id, old_created as created"
-                " FROM deleted_tag_list dtl"
-                " JOIN users u ON dtl.user_id = u.id"
-                " WHERE dtl.old_id = %s",
-                (old_tag_list_id,),
+                (
+                    "UPDATE tag_list "
+                    " SET deleted = true"
+                    " WHERE id = %s"
+                ),
+                (tag_list_id,),
             )
-            .fetchone()
-        )
-        if tag_list:
-            return TagList(**tag_list)
+            self._connection.commit()
+            return tag_list_id
         else:
-            return None
+            raise KeyError(f"The tag list id {tag_list_id} has already been deleted")
