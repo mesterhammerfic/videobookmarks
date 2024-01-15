@@ -29,7 +29,8 @@ async function updateLists() {
 
     const list1Content = document.getElementById("list1-content");
     list1Content.innerHTML = ""; // Clear existing content
-
+    var tag_buttons_enabled = [];
+    var tag_buttons_disabled = [];
     tagsData.forEach(tag => {
         const tagButton = document.createElement("button");
         tagButton.label = tag.tag;
@@ -61,12 +62,23 @@ async function updateLists() {
 
             updateLists(); // Update the lists based on selections
         });
-
-        list1Content.appendChild(tagButton);
+        if (tagButton.disabled) {
+            tag_buttons_disabled.push(tagButton);
+        } else {
+            tag_buttons_enabled.push(tagButton);
+        };
+        tag_buttons_enabled.forEach(button => {
+            list1Content.appendChild(button);
+        });
+        tag_buttons_disabled.forEach(button => {
+            list1Content.appendChild(button);
+        })
     });
 
     const list2Content = document.getElementById("list2-content");
     list2Content.innerHTML = ""; // Clear existing content
+    var video_buttons_enabled = [];
+    var video_buttons_disabled = [];
 
     videosData.forEach(video => {
         const videoButton = document.createElement("button");
@@ -127,7 +139,17 @@ async function updateLists() {
 
             updateLists(); // Update the lists based on selections
         });
-        list2Content.appendChild(videoButton);
+        if (videoButton.disabled) {
+            video_buttons_disabled.push(videoButton);
+        } else {
+            video_buttons_enabled.push(videoButton);
+        };
+        video_buttons_enabled.forEach(button => {
+            list2Content.appendChild(button);
+        });
+        video_buttons_disabled.forEach(button => {
+            list2Content.appendChild(button);
+        })
     });
 }
 
