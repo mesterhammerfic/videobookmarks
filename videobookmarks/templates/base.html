@@ -1,9 +1,9 @@
 <meta
         http-equiv="Content-Security-Policy"
         content="default-src 'self';
-        frame-src youtube.com www.youtube.com;
-        script-src youtube.com www.youtube.com 'self' 'nonce-{SERVER-GENERATED-NONCE}';
-        img-src youtube.com www.youtube.com i.ytimg.com www.googletagmanager.com;
+        frame-src www.youtube.com;
+        script-src www.youtube.com 'self' https://www.google-analytics.com https://www.googletagmanager.com;
+        img-src www.youtube.com i.ytimg.com www.googletagmanager.com;
 "
 >
 <!doctype html>
@@ -23,23 +23,7 @@
     </div>
   </nav>
 <header>
-  <!-- Google Tag Manager -->
-  <script nonce='{SERVER-GENERATED-NONCE}'>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-  'https://www.googletagmanager.com/gtm.js?id='+i+dl;var n=d.querySelector('[nonce]');
-  n&&j.setAttribute('nonce',n.nonce||n.getAttribute('nonce'));f.parentNode.insertBefore(j,f);
-  })(window,document,'script','dataLayer','GTM-5WJH9GN5');</script>
-  <!-- End Google Tag Manager -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-C6L3WML2XG"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-
-    gtag('config', 'G-C6L3WML2XG');
-  </script>
-  <!-- End Google Tag Manager -->
+  <script src="/static/tagging.js"></script>
   {% block header %}{% endblock %}
 </header>
 <body>
