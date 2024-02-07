@@ -28,7 +28,7 @@ help      - Display this help message
 
 
 ### Schema
-<img src="/home/max/videobookmarks/videobookmarks/img/schema.png" alt="image" width="400" height="auto">
+<img src="img/schema.png" alt="image" width="400" height="auto">
 
 `user` Contains the encrypted login credentials for users.
 
@@ -72,3 +72,15 @@ belong to 1 tag list. A video can be linked to multiple tags, but a tag can only
 | youtube_timestamp | integer: the time in seconds when the tag occurs in the video                                                                                                                                                                  |
 | created           | timestamp to track when it was created                                                                                                                                                                       |
 
+## ML Automated Tagging Pipeline
+
+WIP This ML pipeline wll enable the user to submit a request for a video to be automatically tagged with ML. 
+
+Todo:
+- design emotion detection algorithm (proof of concept)
+- set up ML prediction transformation lambda that sends to look-mark
+- set up emotion detection algorithm in glue with pyspark
+- set up data extraction lambda (youtube video downloader)
+- set up api endpoint that sends to sqs queue
+
+<img src="img/look-mark-predictions.png" alt="image" width="400" height="auto">
