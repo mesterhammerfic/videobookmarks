@@ -50,7 +50,7 @@ Each tag list is associated with only one user.
 | deleted     | boolean: true if the tag list has been deleted by the user. <br/>If true, the tag list will not show up in the app. It is kept in the database in case the original author wants to restore it. |
 
 `video` 
-a video must be added to the database in order for tags to be added to it. 
+The youtube video id must be added to the database in order for tags to be added to it. 
 This is done automatically when the first tag is added to a video in the app.
 We store some extra data here so that we don't have to continuously make calls to the youtube
 API as users are navigating the app.
