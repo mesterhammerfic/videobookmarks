@@ -75,12 +75,19 @@ belong to 1 tag list. A video can be linked to multiple tags, but a tag can only
 ## ML Automated Tagging Pipeline
 
 WIP This ML pipeline wll enable the user to submit a request for a video to be automatically tagged with ML. 
+<img src="img/look-mark-predictions.png" alt="image" width="400" height="auto">
 
 Todo:
-- design emotion detection algorithm (proof of concept)
+- ~~design emotion detection algorithm (proof of concept)~~
 - set up ML prediction transformation lambda that sends to look-mark
 - set up emotion detection algorithm in glue with pyspark
 - set up data extraction lambda (youtube video downloader)
 - set up api endpoint that sends to sqs queue
 
-<img src="img/look-mark-predictions.png" alt="image" width="400" height="auto">
+### Proof of concept for emotion detection:
+I set up a notebook ([here](notebooks/emotion_detection.ipynb))
+and I also included a sample of the output in a csv ([here](notebooks/emotion_detection%20-%20aQoFrRq6Ds8.csv)).
+This data was then uploaded to the database under my account, you can view it [here](https://look-mark.com/tagging/10/aQoFrRq6Ds8).
+In production, the user will submit a youtube link, and a modified version
+of the code in this notebook will be run on AWS Glue with PySpark. The results
+will then be uploaded to the users account.
