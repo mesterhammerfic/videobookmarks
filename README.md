@@ -13,19 +13,7 @@ you will need to generate one.
 
  Use Makefile commands below to run install dependencies and unit tests.
 
---------------
-
-# Makefile Commands
-#### this might not be currently working as of 01-25-2024
-<i>command line Makefile statements are formatted as: `make <command>` </i>
-```commandline
-venv      - set up virtual environment (Optional)
-install   - Install dependencies
-test      - Run unit tests
-clean     - Clean up compiled Python files and __pycache__
-help      - Display this help message
-```
-
+------------------------
 
 ### Schema
 <img src="img/schema.png" alt="image" width="400" height="auto">
@@ -91,3 +79,19 @@ This data was then uploaded to the database under my account, you can view it [h
 In production, the user will submit a youtube link, and a modified version
 of the code in this notebook will be run on AWS Glue with PySpark. The results
 will then be uploaded to the users account.
+
+### ML Prediction Transformation Lambda
+This is the lambda represented by step 3 in the diagram 
+above. It will take the output of the emotion detection 
+algorithm and transform it into a format that can be sent to the
+look-mark database. The input format will be a csv with the following
+columns:
+
+| column         | meaning                                                                                                         |
+|----------------|-----------------------------------------------------------------------------------------------------------------|
+| frame          | integer: the frame number of the video. This is the frame number of the video that the emotion was detected in. |
+| timestamp      | float: This is the timestamp in seconds of the video that the emotion was detected in.                          |
+| classification | string: This is the emotion that was detected in the video. Null if no emotion was detected.                    |
+| score          | float: This is the confidence score of the emotion detection. Null if no emotion was detected.                  |
+| scene          | integer: The video is split into scenes, each scene is assigned an integer id.                                  |
+
