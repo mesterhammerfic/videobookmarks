@@ -1,6 +1,8 @@
 import boto3
 import pandas as pd
 import os
+import psycopg2
+
 
 DB_URL = os.getenv('DB_URL')
 if DB_URL is None:
@@ -9,14 +11,8 @@ if DB_URL is None:
     )
 
 
-def lambda_handler(event, context):
-    filename = event['filename']
-    s3 = boto3.resource('s3')
-    obj = s3.Object('ml-pipeline-bucket', filename)
-    response = obj.get()
-    # Load the parquet file into a pandas dataframe
-    df = pd.read_parquet(response['Body'])
-    # transform the data
+def transform_emotion_data(df):
+    # the minimum score needed for an emotion to be used
     minimum_score = .8
     exclude_neutral_min_score = .96
     df["emotion"] = df.apply(lambda x: "no_emotion" if x["score"] < minimum_score else x["emotion"], axis=1)
@@ -46,7 +42,6 @@ def lambda_handler(event, context):
         most_common = max(set(tags), key=counts.get)
         for row in list_of_rows:
             if row["emotion"] == most_common:
-                prevalence = counts[most_common] / len(tags)
                 return most_common, row["frame"]
 
     def get_emotion_shifts(dataframe_of_scenes):
@@ -83,3 +78,34 @@ def lambda_handler(event, context):
             )
 
     df["emotion_shift"] = df["frame"].map(lambda x: x in emotion_shifts)
+    return df
+
+
+# this function takes in the dataframe and uploads it to the database
+# it also takes in the user_id and the tag_list_id from the event
+def upload_to_db(df, user_id, tag_list_id, video_id):
+    # Connect to the database
+    connection = psycopg2.connect(DB_URL)
+    cursor = connection.cursor()
+    for index, row in df[(df["emotion_shift"] == True) & (df.emotion != "no_emotion")].iterrows():
+        # for each row, we are going to insert a tag into the tag table.
+        cursor.execute(
+            "INSERT INTO tag (user_id, tag_list_id, video_id, youtube_timestamp, tag) VALUES (%s, %s, %s, %s, %s)",
+            (user_id, tag_list_id, video_id, row["timestamp"], row["emotion"]),
+        )
+
+
+def lambda_handler(event, context):
+    filename = event['filename']
+    s3 = boto3.resource('s3')
+    obj = s3.Object('ml-pipeline-bucket', filename)
+    response = obj.get()
+    # Load the parquet file into a pandas dataframe
+    df = pd.read_parquet(response['Body'])
+    df = transform_emotion_data(df)
+    # get the user_id and the tag_list_id from the event
+    user_id = event['user_id']
+    tag_list_id = event['tag_list_id']
+    video_id = event['video_id']
+    upload_to_db(df, user_id, tag_list_id, video_id)
+
