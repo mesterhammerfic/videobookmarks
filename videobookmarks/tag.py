@@ -26,6 +26,11 @@ TEST_NEW_VIDEO_LINK = 'test_new_video_link'
 
 
 def get_video_details(video_id):
+    """
+    Get the title and thumbnail of a youtube video
+    :param video_id: youtube video id
+    :return: dictionary with title and thumbnail_url
+    """
     if video_id == TEST_NEW_VIDEO_LINK:
         return {
             "title": "test_title",
@@ -127,6 +132,11 @@ def create():
 
 
 def create_or_load_yt_video_id(yt_link: str):
+    """
+    :param yt_link: youtube link
+    :return: video_id as it is stored in our database
+    Check if the youtube video is already in our database, if not, add it
+    """
     datamodel = get_datamodel()
     video_id = datamodel.load_video_id(yt_link)
     if not video_id:
@@ -142,7 +152,9 @@ def create_or_load_yt_video_id(yt_link: str):
 @bp.route("/add_tag", methods=("POST",))
 @login_required
 def add_tag():
-    """Add a new tag to a video"""
+    """
+    Add a new tag to a video
+    """
 
     tag = request.json["tag"]
     timestamp = request.json["timestamp"]
@@ -173,7 +185,15 @@ def add_tag():
 @bp.route("/delete_tag_list/<int:tag_list_id>", methods=("DELETE",))
 @login_required
 def delete_tag_list(tag_list_id):
-    """Add a new tag to a video"""
+    """
+    Delete a tag list
+    :param tag_list_id: id of tag list to delete
+    :return: id of deleted tag list
+    Note, this does not actually delete the tag list, it just marks it as deleted
+    in the database so that it is filtered from the results. Because tags are very
+    specific and very time consuming to create, I want to ensure that they are not
+    accidentally deleted permanently.
+    """
     user_id = g.user.id
     error = None
 
@@ -201,7 +221,12 @@ def delete_tag_list(tag_list_id):
 
 @bp.route("/tagging/<int:tag_list_id>/<string:yt_video_id>", methods=("GET",))
 def tagging(tag_list_id, yt_video_id):
-    """Add a new tag to a video"""
+    """
+    This is the endpoint that allows the user to watch and tag youtube videos
+    :param tag_list_id: id of tag list to tag
+    :param yt_video_id: youtube video id
+    :return: the tagging page
+    """
     datamodel = get_datamodel()
     tag_list = datamodel.get_tag_list(tag_list_id)
     if tag_list is None:
@@ -217,7 +242,12 @@ def tagging(tag_list_id, yt_video_id):
 
 @bp.route("/<int:tag_list_id>/view", methods=("GET", "POST"))
 def view_tag_list(tag_list_id):
-    """View a tag list."""
+    """
+    Renders an interactive page that allows the user to explore the tags and videos
+    in a tag list
+    :param tag_list_id: id of tag list to view
+    :return: the view page
+    """
     datamodel = get_datamodel()
     tag_list = datamodel.get_tag_list(tag_list_id)
     if tag_list is None:
