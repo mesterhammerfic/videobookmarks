@@ -16,3 +16,7 @@ testpaths = ["tests"]
 [tool.coverage.run]
 branch = true
 source = ["videobookmarks"]
+
+[tool.black]
+line-length = 88
+include_trailing_comma = true
