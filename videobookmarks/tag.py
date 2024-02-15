@@ -33,7 +33,7 @@ def get_video_details(video_id):
     """
     if video_id == TEST_NEW_VIDEO_LINK:
         return {
-            "title": "test_title",
+            "title": 'test_title',
             "thumbnail_url": "test_thumbnail.url"
         }
     base_url = "https://www.googleapis.com/youtube/v3/videos"
