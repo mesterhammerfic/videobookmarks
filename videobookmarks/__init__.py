@@ -1,17 +1,16 @@
 import os
+from typing import Optional, Mapping, Any
 
-from flask import Flask, request, redirect
+from flask import Flask, request, redirect, Response
 
-from videobookmarks.datamodel.datamodel import PostgresDataModel
-
-DB_URL = os.getenv('DB_URL')
+DB_URL = os.getenv("DB_URL")
 if DB_URL is None:
     raise ValueError(
         "Missing DB_URL environment variable, could not connect to Database"
     )
 
 
-def create_app(test_config=None):
+def create_app(test_config: Optional[Mapping[str, Any]] = None) -> Flask:
     """Create and configure an instance of the Flask application."""
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_mapping(
@@ -31,20 +30,21 @@ def create_app(test_config=None):
     # register the database commands
     from videobookmarks import db
     from videobookmarks import authenticate, tag
+
     db.init_app_datamodel(app)
     app.register_blueprint(authenticate.bp)
     app.register_blueprint(tag.bp)
 
     app.add_url_rule("/", endpoint="index")
 
-    @app.before_request
-    def before_request():
+    @app.before_request  # type: ignore
+    def before_request() -> Optional[Response]:
         if app.debug:
-            return
+            return None
         if test_config:
-            return
+            return None
         if request.is_secure:
-            return
+            return None
 
         url = request.url.replace("http://", "https://", 1)
         code = 301

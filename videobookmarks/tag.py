@@ -1,7 +1,7 @@
 import os
-from typing import Sequence
+from typing import Sequence, Union
 
-from flask import Blueprint, Response, current_app
+from flask import Blueprint, Response
 from flask import flash
 from flask import g
 from flask import redirect
@@ -11,10 +11,10 @@ from flask import url_for
 from werkzeug.exceptions import abort
 
 from videobookmarks.authenticate import login_required
-from videobookmarks.datamodel.datamodel import DataModel, GroupedTag, GroupedVideo
+from videobookmarks.datamodel.datamodel import GroupedTag, GroupedVideo, Tag
 from videobookmarks.db import get_datamodel
 
-import requests
+import requests  # type: ignore
 
 bp = Blueprint("tag", __name__)
 
@@ -22,20 +22,17 @@ YT_API_KEY = os.getenv("YT_API_KEY")
 if not YT_API_KEY:
     raise ValueError("YT_API_KEY not set")
 
-TEST_NEW_VIDEO_LINK = 'test_new_video_link'
+TEST_NEW_VIDEO_LINK = "test_new_video_link"
 
 
-def get_video_details(video_id):
+def get_video_details(video_id: str) -> dict[str, str]:
     """
     Get the title and thumbnail of a youtube video
     :param video_id: youtube video id
     :return: dictionary with title and thumbnail_url
     """
     if video_id == TEST_NEW_VIDEO_LINK:
-        return {
-            "title": 'test_title',
-            "thumbnail_url": "test_thumbnail.url"
-        }
+        return {"title": "test_title", "thumbnail_url": "test_thumbnail.url"}
     base_url = "https://www.googleapis.com/youtube/v3/videos"
     params = {
         "part": "snippet",
@@ -57,28 +54,26 @@ def get_video_details(video_id):
         if not thumbnail_url:
             raise ValueError("Missing thumbnail")
 
-        return {
-            "title": title,
-            "thumbnail_url": thumbnail_url
-        }
+        return {"title": title, "thumbnail_url": thumbnail_url}
     else:
         raise ValueError('data["items"] is empty or missing')
 
 
-@bp.route("/")
-def index():
+@bp.route("/")  # type: ignore
+def index() -> str:
     """
     Ask the user to select or create a tag list
     """
     datamodel = get_datamodel()
-    return render_template(
+    template: str = render_template(
         "tag_list/index.html",
         tag_lists=datamodel.get_tag_lists(),
     )
+    return template
 
 
-@bp.route("/get_tags/<int:tag_list_id>", methods=("GET",))
-def get_tag_list_tags(tag_list_id) -> Sequence[GroupedTag]:
+@bp.route("/get_tags/<int:tag_list_id>", methods=("GET",))  # type: ignore
+def get_tag_list_tags(tag_list_id: int) -> Sequence[GroupedTag]:
     """
     :param tag_list_id: id of tag_list to get
     :return: all the tags in that list
@@ -87,8 +82,8 @@ def get_tag_list_tags(tag_list_id) -> Sequence[GroupedTag]:
     return datamodel.get_tag_list_tags(tag_list_id)
 
 
-@bp.route("/get_videos/<int:tag_list_id>", methods=("GET",))
-def get_tag_list_videos(tag_list_id) -> Sequence[GroupedVideo]:
+@bp.route("/get_videos/<int:tag_list_id>", methods=("GET",))  # type: ignore
+def get_tag_list_videos(tag_list_id: int) -> Sequence[GroupedVideo]:
     """
     :param tag_list_id: id of tag_list to get
     :return: all the videos in that list
@@ -97,8 +92,8 @@ def get_tag_list_videos(tag_list_id) -> Sequence[GroupedVideo]:
     return datamodel.get_tag_list_videos(tag_list_id)
 
 
-@bp.route("/video_tags/<int:video_id>/<int:tag_list_id>", methods=("GET",))
-def get_video_tags(video_id, tag_list_id):
+@bp.route("/video_tags/<int:video_id>/<int:tag_list_id>", methods=("GET",))  # type: ignore
+def get_video_tags(video_id: int, tag_list_id: int) -> Sequence[Tag]:
     """
     :param video_id: id of video to get
     :param tag_list_id: id of tag_list to get
@@ -108,9 +103,9 @@ def get_video_tags(video_id, tag_list_id):
     return datamodel.get_video_tags(video_id, tag_list_id)
 
 
-@bp.route("/create", methods=("GET", "POST"))
-@login_required
-def create():
+@bp.route("/create", methods=("GET", "POST"))  # type: ignore
+@login_required  # type: ignore
+def create() -> Union[str, Response]:
     """Create a new tag_list for the current user."""
     if request.method == "POST":
         name = request.form["name"]
@@ -131,7 +126,7 @@ def create():
     return render_template("tag_list/create.html")
 
 
-def create_or_load_yt_video_id(yt_link: str):
+def create_or_load_yt_video_id(yt_link: str) -> int:
     """
     :param yt_link: youtube link
     :return: video_id as it is stored in our database
@@ -146,16 +141,17 @@ def create_or_load_yt_video_id(yt_link: str):
             video_details["thumbnail_url"],
             video_details["title"],
         )
+    if video_id is None:
+        raise ValueError("video_id is None")
     return video_id
 
 
-@bp.route("/add_tag", methods=("POST",))
-@login_required
-def add_tag():
+@bp.route("/add_tag", methods=("POST",))  # type: ignore
+@login_required  # type: ignore
+def add_tag() -> Union[Response, dict[str, int]]:
     """
     Add a new tag to a video
     """
-
     tag = request.json["tag"]
     timestamp = request.json["timestamp"]
     tag_list_id = request.json["tag_list_id"]
@@ -182,9 +178,9 @@ def add_tag():
         return {"id": tag_id}
 
 
-@bp.route("/delete_tag_list/<int:tag_list_id>", methods=("DELETE",))
-@login_required
-def delete_tag_list(tag_list_id):
+@bp.route("/delete_tag_list/<int:tag_list_id>", methods=("DELETE",))  # type: ignore
+@login_required  # type: ignore
+def delete_tag_list(tag_list_id: int) -> Union[Response, str]:
     """
     Delete a tag list
     :param tag_list_id: id of tag list to delete
@@ -195,32 +191,29 @@ def delete_tag_list(tag_list_id):
     accidentally deleted permanently.
     """
     user_id = g.user.id
-    error = None
-
     if not tag_list_id:
         error = "Tag list id is required."
-
+        abort(Response(response=[error], status=422))
     datamodel = get_datamodel()
     tag_list = datamodel.get_tag_list(tag_list_id)
-    print(tag_list)
-    if not tag_list:
+    if tag_list is None:
         error = "No tag list with that id found"
-    if user_id != tag_list.user_id:
-        # cannot delete a tag list you do not own
-        abort(403)
+        abort(Response(response=[error], status=422))
+    if user_id != tag_list.user_id:  # type: ignore
+        error = "You are not authorized to delete this tag list"
+        abort(Response(response=[error], status=403))
+    try:
+        deleted_tag_list_id = datamodel.delete_tag_list(tag_list_id)
+        return Response(
+            response=[f"deleted tag_list id: {deleted_tag_list_id}"],
+            status=200,
+        )
+    except KeyError:
+        abort(404)
 
-    if error is not None:
-        abort(422)
-    else:
-        try:
-            deleted_tag_list_id = datamodel.delete_tag_list(tag_list_id)
-            return {"deleted tag_list id": deleted_tag_list_id}
-        except KeyError:
-            abort(404)
 
-
-@bp.route("/tagging/<int:tag_list_id>/<string:yt_video_id>", methods=("GET",))
-def tagging(tag_list_id, yt_video_id):
+@bp.route("/tagging/<int:tag_list_id>/<string:yt_video_id>", methods=("GET",))  # type: ignore
+def tagging(tag_list_id: int, yt_video_id: str) -> str:
     """
     This is the endpoint that allows the user to watch and tag youtube videos
     :param tag_list_id: id of tag list to tag
@@ -232,21 +225,22 @@ def tagging(tag_list_id, yt_video_id):
     if tag_list is None:
         abort(404, f"Tag list id {id} doesn't exist.")
     video_id = create_or_load_yt_video_id(yt_video_id)
-    return render_template(
+    template: str = render_template(
         "tag_list/tagging.html",
         tag_list=tag_list,
         yt_video_id=yt_video_id,
         video_id=video_id,
     )
+    return template
 
 
-@bp.route("/<int:tag_list_id>/view", methods=("GET", "POST"))
-def view_tag_list(tag_list_id):
+@bp.route("/<int:tag_list_id>/view", methods=("GET", "POST"))  # type: ignore
+def view_tag_list(tag_list_id: int) -> Union[Response, str]:
     """
     Renders an interactive page that allows the user to explore the tags and videos
     in a tag list
     :param tag_list_id: id of tag list to view
-    :return: the view page
+    :return: the view page or the tagging page if the user submits a new video
     """
     datamodel = get_datamodel()
     tag_list = datamodel.get_tag_list(tag_list_id)
@@ -262,9 +256,7 @@ def view_tag_list(tag_list_id):
         if error is not None:
             flash(error)
         else:
-            return redirect(
-                f"/tagging/{tag_list.id}/{yt_video_id}"
-            )
+            return redirect(f"/tagging/{tag_list.id}/{yt_video_id}")  # type: ignore
     return render_template(
         "tag_list/view.html",
         tag_list=tag_list,
