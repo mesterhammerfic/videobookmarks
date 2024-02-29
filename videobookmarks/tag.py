@@ -48,12 +48,10 @@ def get_video_details(video_id: str) -> dict[str, str]:
         title = snippet.get("title", "")
         thumbnails = snippet.get("thumbnails", {})
         thumbnail_url = thumbnails.get("default", {}).get("url", "")
-
         if not title:
             raise ValueError("Missing title")
         if not thumbnail_url:
             raise ValueError("Missing thumbnail")
-
         return {"title": title, "thumbnail_url": thumbnail_url}
     else:
         raise ValueError('data["items"] is empty or missing')
@@ -111,11 +109,9 @@ def create() -> Union[str, Response]:
         name = request.form["name"]
         description = request.form["description"]
         user_id = g.user.id
-
         error = None
         if not name:
             error = "Name is required."
-
         if error is not None:
             flash(error)
         else:
@@ -158,10 +154,8 @@ def add_tag() -> Union[Response, dict[str, int]]:
     yt_video_id = request.json["yt_video_id"]
     user_id = g.user.id
     error = None
-
     if not tag:
         error = "Tag is required."
-
     if error is not None:
         return Response(422)
     else:
